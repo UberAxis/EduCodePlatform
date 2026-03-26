@@ -1,9 +1,8 @@
-using AutoMapper;
 using EduCodePlatform.Application;
 using EduCodePlatform.Application.Mappings.Users;
 using EduCodePlatform.Infrastructure;
-using EduCodePlatform.WebApi;
-using System.Runtime.InteropServices;
+using EduCodePlatform.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
 namespace EduCodePlatform.WebApi
@@ -62,6 +61,12 @@ namespace EduCodePlatform.WebApi
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+            }
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.Migrate();
             }
 
             app.UseHttpsRedirection();
