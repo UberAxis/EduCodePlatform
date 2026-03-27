@@ -1,13 +1,18 @@
 ﻿using EduCodePlatform.Application.Interfaces.Auth;
+using EduCodePlatform.Application.Interfaces.FileStorage.Lessons;
+using EduCodePlatform.Application.Interfaces.FileStorage.Modules;
 using EduCodePlatform.Application.Interfaces.Repositories;
 using EduCodePlatform.Domain.Entities;
 using EduCodePlatform.Infrastructure.Auth;
+using EduCodePlatform.Infrastructure.FileStorage;
+using EduCodePlatform.Infrastructure.FileStorage.Lessons;
+using EduCodePlatform.Infrastructure.FileStorage.Modules;
 using EduCodePlatform.Infrastructure.Persistence;
 using EduCodePlatform.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
 
 namespace EduCodePlatform.Infrastructure
 {
@@ -34,6 +39,10 @@ namespace EduCodePlatform.Infrastructure
 
             // Repositories
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IModuleRepository, ModuleRepository>();
+            services.AddScoped<ILessonRepository, LessonRepository>();
+            services.AddScoped<ILessonTaskRepository, LessonTaskRepository>();
+            services.AddScoped<ITaskSubmissionRepository, TaskSubmissionRepository>();
 
             // UnitOfWork
             services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -41,6 +50,11 @@ namespace EduCodePlatform.Infrastructure
             // Auth
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
             services.AddScoped<ITokenService, JwtTokenGenerator>();
+
+            // File storage
+            services.Configure<FileStorageOptions>(configuration.GetSection("FileStorage"));
+            services.AddScoped<IModuleImageStorage, ModuleFileStorageService>();
+            services.AddScoped<ILessonCoverImageStorage, LessonCoverImageService>();
 
             return services;
         }

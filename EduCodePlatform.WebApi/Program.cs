@@ -1,11 +1,12 @@
 using AutoMapper;
 using EduCodePlatform.Application;
-using EduCodePlatform.Application.Mappings.Users;
 using EduCodePlatform.Infrastructure;
 using EduCodePlatform.Infrastructure.Persistence;
 using EduCodePlatform.WebApi;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
+using EduCodePlatform.WebApi.Middlewares;
+using EduCodePlatform.Application.Mappings;
 
 namespace EduCodePlatform.WebApi
 {
@@ -65,6 +66,8 @@ namespace EduCodePlatform.WebApi
                 app.UseSwaggerUI();
             }
 
+            app.UseMiddleware<ExceptionMiddleware>();
+
             app.UseHttpsRedirection();
 
             app.UseCors("Default");
@@ -77,6 +80,7 @@ namespace EduCodePlatform.WebApi
 
             app.UseStaticFiles();
 
+            // Seed Admin User
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;

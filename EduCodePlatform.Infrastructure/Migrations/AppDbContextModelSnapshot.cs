@@ -22,6 +22,155 @@ namespace EduCodePlatform.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("EduCodePlatform.Domain.Entities.Lesson", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CoverImage")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MarkdownContent")
+                        .IsRequired()
+                        .HasMaxLength(4200)
+                        .HasColumnType("character varying(4200)");
+
+                    b.Property<int>("ModuleId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ModuleId");
+
+                    b.ToTable("Lessons", (string)null);
+                });
+
+            modelBuilder.Entity("EduCodePlatform.Domain.Entities.LessonTask", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExpectedAnswer")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("LessonId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MarkdownContent")
+                        .IsRequired()
+                        .HasMaxLength(4200)
+                        .HasColumnType("character varying(4200)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LessonId");
+
+                    b.ToTable("LessonTasks", (string)null);
+                });
+
+            modelBuilder.Entity("EduCodePlatform.Domain.Entities.Module", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CoverImage")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(4200)
+                        .HasColumnType("character varying(4200)");
+
+                    b.Property<int>("OrderIndex")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Models", (string)null);
+                });
+
+            modelBuilder.Entity("EduCodePlatform.Domain.Entities.TaskSubmission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Answer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("LessonTaskId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Result")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LessonTaskId");
+
+                    b.ToTable("TaskSubmissions", (string)null);
+                });
+
             modelBuilder.Entity("EduCodePlatform.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -257,6 +406,39 @@ namespace EduCodePlatform.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("EduCodePlatform.Domain.Entities.Lesson", b =>
+                {
+                    b.HasOne("EduCodePlatform.Domain.Entities.Module", "Module")
+                        .WithMany("Lessons")
+                        .HasForeignKey("ModuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Module");
+                });
+
+            modelBuilder.Entity("EduCodePlatform.Domain.Entities.LessonTask", b =>
+                {
+                    b.HasOne("EduCodePlatform.Domain.Entities.Lesson", "Lesson")
+                        .WithMany("LessonTasks")
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lesson");
+                });
+
+            modelBuilder.Entity("EduCodePlatform.Domain.Entities.TaskSubmission", b =>
+                {
+                    b.HasOne("EduCodePlatform.Domain.Entities.LessonTask", "LessonTask")
+                        .WithMany("TaskSubmissions")
+                        .HasForeignKey("LessonTaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LessonTask");
+                });
+
             modelBuilder.Entity("EduCodePlatform.Domain.Entities.User", b =>
                 {
                     b.HasOne("EduCodePlatform.Domain.Entities.User", "Parent")
@@ -315,6 +497,21 @@ namespace EduCodePlatform.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("EduCodePlatform.Domain.Entities.Lesson", b =>
+                {
+                    b.Navigation("LessonTasks");
+                });
+
+            modelBuilder.Entity("EduCodePlatform.Domain.Entities.LessonTask", b =>
+                {
+                    b.Navigation("TaskSubmissions");
+                });
+
+            modelBuilder.Entity("EduCodePlatform.Domain.Entities.Module", b =>
+                {
+                    b.Navigation("Lessons");
                 });
 
             modelBuilder.Entity("EduCodePlatform.Domain.Entities.User", b =>

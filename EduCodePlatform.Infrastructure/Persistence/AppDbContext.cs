@@ -8,6 +8,11 @@ namespace EduCodePlatform.Infrastructure.Persistence
 {
     public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     {
+        public DbSet<Module> Modules => Set<Module>();
+        public DbSet<Lesson> Lessons => Set<Lesson>();
+        public DbSet<LessonTask> LessonTasks => Set<LessonTask>();
+        public DbSet<TaskSubmission> TaskSubmissions => Set<TaskSubmission>();
+
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
@@ -21,30 +26,24 @@ namespace EduCodePlatform.Infrastructure.Persistence
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            var entries = ChangeTracker.Entries();
-
-            foreach (var entry in entries)
+            foreach (var entry in ChangeTracker.Entries())
             {
+                if (entry.State is not (EntityState.Added or EntityState.Modified))
+                    continue;
+
                 var now = DateTime.UtcNow;
+                var isAdded = entry.State == EntityState.Added;
 
-                switch (entry.State)
+                switch (entry.Entity)
                 {
-                    case EntityState.Added:
-                        SetTimestamp(entry.Entity, "CreatedAt", now);
+                    case BaseEntity:
+                        entry.Property(isAdded ? "CreatedAt" : "UpdatedAt").CurrentValue = now;
                         break;
 
-                    case EntityState.Modified:
-                        SetTimestamp(entry.Entity, "UpdatedAt", now);
+                    case User user:
+                        if (isAdded) user.CreatedAt = now;
+                        else user.UpdatedAt = now;
                         break;
-                }
-            }
-
-            void SetTimestamp(object entity, string prop, DateTime date)
-            {
-                if (entity is BaseEntity or User)
-                {
-                    var property = entity.GetType().GetProperty(prop);
-                    property?.SetValue(entity, date);
                 }
             }
 

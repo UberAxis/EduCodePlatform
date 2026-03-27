@@ -4,9 +4,6 @@ using Microsoft.Extensions.Configuration;
 
 namespace EduCodePlatform.Infrastructure.Persistence
 {
-    //  ЕСЛИ ЧЕСТНО, НЕ ПОМНЮ ТОЧНО, ЗАЧЕМ ЭТО, НО ВСТАВИЛ, ТК ЕСТЬ СЕЙЧАС В ДИПЛОМНОМ САЙТЕ
-    //  НО ВРОДЕ БЕЗ ЭТОГГО ЧТО-ТО НЕ РАБОТАЛО
-
     public class DesignTimeDbContextFactory
         : IDesignTimeDbContextFactory<AppDbContext>
     {

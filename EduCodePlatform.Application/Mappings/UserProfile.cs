@@ -2,7 +2,7 @@
 using EduCodePlatform.Application.DTOs.Users;
 using EduCodePlatform.Domain.Entities;
 
-namespace EduCodePlatform.Application.Mappings.Users
+namespace EduCodePlatform.Application.Mappings
 {
     public class UserProfile : Profile
     {
