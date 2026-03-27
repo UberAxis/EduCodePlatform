@@ -1,6 +1,7 @@
 using AutoMapper;
 using EduCodePlatform.Application;
 using EduCodePlatform.Infrastructure;
+using EduCodePlatform.Infrastructure.Persistence;
 using EduCodePlatform.WebApi;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
@@ -11,7 +12,7 @@ namespace EduCodePlatform.WebApi
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -52,7 +53,7 @@ namespace EduCodePlatform.WebApi
             {
                 options.AddPolicy("Default", policy =>
                 {
-                    //                        frontend
+                    // frontend
                     policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
                 });
             });
@@ -64,6 +65,8 @@ namespace EduCodePlatform.WebApi
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseHttpsRedirection();
 
@@ -77,7 +80,20 @@ namespace EduCodePlatform.WebApi
 
             app.UseStaticFiles();
 
-            app.UseMiddleware<ExceptionMiddleware>();
+            // Seed Admin User
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                try
+                {
+                    await DbInitializer.SeedAdminUser(services);
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "An error occurred while seeding the database.");
+                }
+            }
 
             app.Run();
         }

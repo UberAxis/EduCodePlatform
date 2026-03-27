@@ -4,8 +4,7 @@ namespace EduCodePlatform.Application.DTOs.Users
 {
     public class UpdateUserDTO
     {
-        public string Name { get; set; } = null!;
-        public IFormFile? Avatar { get; set; }
+        public string UserName { get; set; } = null!;
         public string? Password { get; set; }
     }
 }

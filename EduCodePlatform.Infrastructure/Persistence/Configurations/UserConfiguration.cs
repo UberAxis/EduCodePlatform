@@ -15,11 +15,11 @@ namespace EduCodePlatform.Infrastructure.Persistence.Configurations
             builder.Property(u => u.Id)
                 .ValueGeneratedOnAdd();
 
-            builder.Property(u => u.Name)
+            builder.Property(u => u.UserName)
                 .IsRequired()
                 .HasMaxLength(255);
 
-            builder.Property(u => u.HashPassword)
+            builder.Property(u => u.PasswordHash)
                 .IsRequired();
 
             builder.Property(u => u.Avatar)
