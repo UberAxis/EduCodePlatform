@@ -16,7 +16,7 @@ namespace EduCodePlatform.Infrastructure.Persistence
             var basePath = Directory.GetCurrentDirectory();
 
             // Поднимаемся к WebApi, чтобы прочитать appsettings.json
-            var webApiPath = Path.Combine(basePath, "..", "EduCodePlatform");
+            var webApiPath = Path.Combine(basePath, "..", "EduCodePlatform.WebApi");
 
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(webApiPath)

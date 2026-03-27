@@ -4,6 +4,7 @@ using EduCodePlatform.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using System.Security.Claims;
 
 namespace EduCodePlatform.WebApi.Controllers
 {
@@ -19,6 +20,7 @@ namespace EduCodePlatform.WebApi.Controllers
             _service = service;
             _jwtOptions = jwtOptions.Value;
         }
+
         private void SetJWTCookie(string token)
         {
             var CookieOptions = new CookieOptions
@@ -33,6 +35,7 @@ namespace EduCodePlatform.WebApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<GetUserDTO>>> GetAll()
         {
             try
@@ -40,17 +43,25 @@ namespace EduCodePlatform.WebApi.Controllers
                 var users = await _service.GetAllAsync();
                 return Ok(users);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, "Internal server error");
             }
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<GetUserDTO>> GetById(int id)
+        [Authorize]
+        public async Task<ActionResult<GetUserDTO>> GetById(Guid id)
         {
             try
             {
+                // юзер может видеть только себя, если он не админ
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!User.IsInRole("Admin") && currentUserId != id.ToString())
+                {
+                    return Forbid();
+                }
+
                 var user = await _service.GetByIdAsync(id);
                 return Ok(user);
             }
@@ -58,11 +69,10 @@ namespace EduCodePlatform.WebApi.Controllers
             {
                 return NotFound(ex.Message);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, "Internal server error");
             }
-
         }
 
         [HttpPost("register")]
@@ -77,7 +87,7 @@ namespace EduCodePlatform.WebApi.Controllers
             {
                 return Conflict(ex.Message);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, "Internal server error");
             }
@@ -90,39 +100,66 @@ namespace EduCodePlatform.WebApi.Controllers
             {
                 var token = await _service.LoginAsync(dto);
                 SetJWTCookie(token);
-                return Ok();
+                return Ok(new { token });
             }
             catch (UnauthorizedAccessException ex)
             {
                 return Unauthorized(ex.Message);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, "Internal server error");
             }
-
         }
 
-        [HttpPut("{id}")]
-        public async Task<ActionResult<GetUserDTO>> Update(int id, UpdateUserDTO dto)
+        [HttpPut("profile")]
+        [Authorize]
+        public async Task<ActionResult<GetUserDTO>> UpdateProfile(UpdateUserProfileDTO dto)
         {
             try
             {
-                var updated = await _service.UpdateAsync(id, dto);
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
+
+                var updated = await _service.UpdateProfileAsync(Guid.Parse(currentUserId), dto);
+                return Ok(updated);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpPut("admin/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<GetUserDTO>> AdminUpdateUser(Guid id, AdminUpdateUserDTO dto)
+        {
+            try
+            {
+                var updated = await _service.AdminUpdateUserAsync(id, dto);
                 return Ok(updated);
             }
             catch (KeyNotFoundException ex)
             {
                 return NotFound(ex.Message);
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception)
             {
                 return StatusCode(500, "Internal server error");
             }
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<GetUserDTO>> Delete(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> Delete(Guid id)
         {
             try
             {
@@ -133,7 +170,7 @@ namespace EduCodePlatform.WebApi.Controllers
             {
                 return NotFound(ex.Message);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return StatusCode(500, "Internal server error");
             }
