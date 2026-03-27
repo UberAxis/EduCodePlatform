@@ -1,11 +1,11 @@
-﻿using EduCodePlatform.Application.Interfaces.FileStorage.Users;
+using EduCodePlatform.Application.Interfaces.FileStorage.Users;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
 namespace EduCodePlatform.Infrastructure.FileStorage.Users
 {
-    public class UserImageService : BaseFileStorageService ,IUserImageStorage
+    public class UserImageService : BaseFileStorageService, IUserImageStorage
     {
         private readonly string _rootPath;
         private readonly string _requestPath;
@@ -16,17 +16,19 @@ namespace EduCodePlatform.Infrastructure.FileStorage.Users
         {
             _requestPath = options.Value.RequestUserAvatarPath;
 
+            var webRoot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
+
             _rootPath = Path.Combine(
-                env.WebRootPath,
+                webRoot,
                 "uploads",
                 "users");
 
             FileDirectoryCheck(_rootPath);
         }
 
-        public Task<string> SaveAsync(IFormFile file)
+        public async Task<string> SaveAsync(IFormFile file)
         {
-            return BaseSaveAsync(file, _rootPath, _requestPath);
+            return await BaseSaveAsync(file, _rootPath, _requestPath);
         }
 
         public Task DeleteAsync(string path)
