@@ -1,11 +1,13 @@
 ﻿using EduCodePlatform.Application.Interfaces.Auth;
 using EduCodePlatform.Application.Interfaces.FileStorage.Lessons;
 using EduCodePlatform.Application.Interfaces.FileStorage.Modules;
+using EduCodePlatform.Application.Interfaces.FileStorage.Users;
 using EduCodePlatform.Application.Interfaces.Repositories;
 using EduCodePlatform.Infrastructure.Auth;
 using EduCodePlatform.Infrastructure.FileStorage;
 using EduCodePlatform.Infrastructure.FileStorage.Lessons;
 using EduCodePlatform.Infrastructure.FileStorage.Modules;
+using EduCodePlatform.Infrastructure.FileStorage.Users;
 using EduCodePlatform.Infrastructure.Persistence;
 using EduCodePlatform.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +43,7 @@ namespace EduCodePlatform.Infrastructure
             services.Configure<FileStorageOptions>(configuration.GetSection("FileStorage"));
             services.AddScoped<IModuleImageStorage, ModuleFileStorageService>();
             services.AddScoped<ILessonCoverImageStorage, LessonCoverImageService>();
+            services.AddScoped<IUserImageStorage, UserImageService>();
 
             return services;
         }

@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
 using EduCodePlatform.Application.DTOs.Users;
 using EduCodePlatform.Application.Interfaces.Auth;
+using EduCodePlatform.Application.Interfaces.FileStorage.Users;
 using EduCodePlatform.Application.Interfaces.Repositories;
 using EduCodePlatform.Application.Interfaces.Services;
 using EduCodePlatform.Domain.Entities;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace EduCodePlatform.Application.Services
 {
@@ -13,17 +15,20 @@ namespace EduCodePlatform.Application.Services
         private readonly IPasswordHasher _passwordHasher;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserImageStorage _fileStorageService;
 
         public UserService(
             IUnitOfWork unitOfWork,
             ITokenService tokenService,
             IPasswordHasher passwordHasher,
-            IMapper mapper)
+            IMapper mapper,
+            IUserImageStorage fileStorageService)
         {
             _tokenService = tokenService;
             _passwordHasher = passwordHasher;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _fileStorageService = fileStorageService;
         }
 
         public async Task<IEnumerable<GetUserDTO>> GetAllAsync()
@@ -53,8 +58,11 @@ namespace EduCodePlatform.Application.Services
 
             var hash = _passwordHasher.Hash(dto.Password);
 
+            var imagePath = await _fileStorageService.SaveAsync(dto.Avatar);
+
             var user = new User(
                 name: name,
+                avatar: imagePath,
                 hashPassword: hash
             );
 
@@ -86,14 +94,36 @@ namespace EduCodePlatform.Application.Services
             if (user == null)
                 throw new KeyNotFoundException("User not found");
 
+            string? oldImagePath = user.Avatar;
+            string? newImage = null;
+
+            var image = dto.Avatar;
+
+            if (image != null)
+            {
+                var imagePath = await _fileStorageService.SaveAsync(image);
+                newImage = imagePath;
+
+                if (!string.IsNullOrEmpty(oldImagePath))
+                    await _fileStorageService.DeleteAsync(oldImagePath);
+            }
+
             user.UpdateUser(
-                name: dto.Name
+                name: dto.Name,
+                avatar: newImage
             );
 
             if (!string.IsNullOrWhiteSpace(dto.Password))
             {
                 var hash = _passwordHasher.Hash(dto.Password);
                 user.ChangePassword(hash);
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+
+            if (image != null && oldImagePath != null)
+            {
+                await _fileStorageService.DeleteAsync(oldImagePath);
             }
 
             await _unitOfWork.SaveChangesAsync();
@@ -107,8 +137,13 @@ namespace EduCodePlatform.Application.Services
             if (user == null)
                 throw new KeyNotFoundException("User not found");
 
+            var image = user.Avatar;
+
             _unitOfWork.Users.Delete(user);
             await _unitOfWork.SaveChangesAsync();
+
+            if (image != null)
+                await _fileStorageService.DeleteAsync(image);
         }
     }
 }

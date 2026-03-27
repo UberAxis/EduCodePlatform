@@ -5,5 +5,6 @@
         public string RequestModulePath { get; set; } = default!;
         public string RequestLessonCoverPath { get; set; } = default!;
         public string RequestLessonContentPath { get; set; } = default!;
+        public string RequestUserAvatarPath { get; set; } = default!;
     }
 }

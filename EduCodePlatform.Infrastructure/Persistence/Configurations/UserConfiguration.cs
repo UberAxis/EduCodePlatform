@@ -22,6 +22,10 @@ namespace EduCodePlatform.Infrastructure.Persistence.Configurations
             builder.Property(u => u.HashPassword)
                 .IsRequired();
 
+            builder.Property(u => u.Avatar)
+                .IsRequired()
+                .HasMaxLength(255);
+
             builder.Property(u => u.Role)
                 .IsRequired()
                 .HasConversion<int>();
