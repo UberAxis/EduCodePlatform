@@ -1,15 +1,18 @@
 using EduCodePlatform.Application;
-using EduCodePlatform.Application.Mappings.Users;
 using EduCodePlatform.Infrastructure;
 using EduCodePlatform.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using EduCodePlatform.WebApi;
+using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
+using EduCodePlatform.WebApi.Middlewares;
+using EduCodePlatform.Application.Mappings;
 
 namespace EduCodePlatform.WebApi
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -50,7 +53,7 @@ namespace EduCodePlatform.WebApi
             {
                 options.AddPolicy("Default", policy =>
                 {
-                    //                        frontend
+                    // frontend
                     policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
                 });
             });
@@ -63,11 +66,7 @@ namespace EduCodePlatform.WebApi
                 app.UseSwaggerUI();
             }
 
-            using (var scope = app.Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                db.Database.Migrate();
-            }
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseHttpsRedirection();
 
@@ -80,6 +79,25 @@ namespace EduCodePlatform.WebApi
             app.MapControllers();
 
             app.UseStaticFiles();
+
+            // Seed Admin User
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                
+                var db = services.GetRequiredService<AppDbContext>();  
+                db.Database.Migrate();
+                
+                try
+                {
+                    await DbInitializer.SeedAdminUser(services);
+                }
+                catch (Exception ex)
+                {
+                    var logger = services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "An error occurred while seeding the database.");
+                }
+            }
 
             app.Run();
         }

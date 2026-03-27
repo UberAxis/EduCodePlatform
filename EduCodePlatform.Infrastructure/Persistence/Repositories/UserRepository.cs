@@ -16,11 +16,11 @@ namespace EduCodePlatform.Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<User>> GetAllAsync() =>
             await _context.Users.ToListAsync();
 
-        public async Task<User?> GetByIdAsync(int id) =>
+        public async Task<User?> GetByIdAsync(Guid id) =>
             await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
 
-        public async Task<User?> GetByNameAsync(string name) =>
-            await _context.Users.FirstOrDefaultAsync(u => u.Name == name);
+        public async Task<User?> GetByUserNameAsync(string userName) =>
+            await _context.Users.FirstOrDefaultAsync(u => u.UserName == userName);
 
         public void Add(User user) =>
             _context.Users.Add(user);
@@ -28,13 +28,13 @@ namespace EduCodePlatform.Infrastructure.Persistence.Repositories
         public void Delete(User user) =>
             _context.Users.Remove(user);
 
-        public async Task<bool> ExistsByNameAsync(string name) =>
-            await _context.Users.AnyAsync(u => u.Name == name);
+        public async Task<bool> ExistsByUserNameAsync(string userName) =>
+            await _context.Users.AnyAsync(u => u.UserName == userName);
 
-        public async Task<bool> ExistsByIdAsync(int id) =>
+        public async Task<bool> ExistsByIdAsync(Guid id) =>
             await _context.Users.AnyAsync(u => u.Id == id);
 
-        public async Task<bool> ExistsByNameExceptUserAsync(string name, int id) =>
-            await _context.Users.AnyAsync(u => u.Id != id && u.Name == name);
+        public async Task<bool> ExistsByUserNameExceptUserAsync(string userName, Guid id) =>
+            await _context.Users.AnyAsync(u => u.Id != id && u.UserName == userName);
     }
 }

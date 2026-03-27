@@ -6,18 +6,18 @@ namespace EduCodePlatform.Application.Interfaces.Repositories
     {
         Task<IEnumerable<User>> GetAllAsync();
 
-        Task<User?> GetByIdAsync(int id);
+        Task<User?> GetByIdAsync(Guid id);
 
-        Task<User?> GetByNameAsync(string name);
+        Task<User?> GetByUserNameAsync(string userName);
 
         void Add(User user);
 
         void Delete(User user);
 
-        Task<bool> ExistsByNameAsync(string name);
+        Task<bool> ExistsByUserNameAsync(string userName);
 
-        Task<bool> ExistsByIdAsync(int id);
+        Task<bool> ExistsByIdAsync(Guid id);
 
-        Task<bool> ExistsByNameExceptUserAsync(string name, int id);
+        Task<bool> ExistsByUserNameExceptUserAsync(string userName, Guid id);
     }
 }
