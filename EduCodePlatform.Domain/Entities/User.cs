@@ -30,19 +30,11 @@ namespace EduCodePlatform.Domain.Entities
 
         public User() { }
 
-        public User(
-            string name,
-            string hashPassword,
-            UserRole role = UserRole.User)
+        public User(string userName, UserRole role = UserRole.User)
         {
-            Name = name;
-            HashPassword = hashPassword;
+            UserName = userName;
             Role = role;
-        }
-
-        public void UpdateUser(string name)
-        {
-            Name = name;
+            CreatedAt = DateTime.UtcNow;
         }
 
         public void UpdateUser(string userName)

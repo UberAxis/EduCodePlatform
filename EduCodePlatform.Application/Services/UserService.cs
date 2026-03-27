@@ -3,6 +3,8 @@ using EduCodePlatform.Application.DTOs.Users;
 using EduCodePlatform.Application.Interfaces.Auth;
 using EduCodePlatform.Application.Interfaces.Services;
 using EduCodePlatform.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace EduCodePlatform.Application.Services
 {
@@ -11,18 +13,15 @@ namespace EduCodePlatform.Application.Services
         private readonly UserManager<User> _userManager;
         private readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
-        private readonly IUnitOfWork _unitOfWork;
 
         public UserService(
             UserManager<User> userManager,
             ITokenService tokenService,
-            IPasswordHasher passwordHasher,
             IMapper mapper)
         {
             _userManager = userManager;
             _tokenService = tokenService;
             _mapper = mapper;
-            _unitOfWork = unitOfWork;
         }
 
         public async Task<IEnumerable<GetUserDTO>> GetAllAsync()
@@ -52,13 +51,10 @@ namespace EduCodePlatform.Application.Services
 
             var result = await _userManager.CreateAsync(user, dto.Password);
 
-            var user = new User(
-                name: name,
-                hashPassword: hash
-            );
-
-            _unitOfWork.Users.Add(user);
-            await _unitOfWork.SaveChangesAsync();
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
 
             return _mapper.Map<GetUserDTO>(user);
         }
@@ -106,9 +102,24 @@ namespace EduCodePlatform.Application.Services
                     throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
             }
 
-            user.UpdateUser(
-                name: dto.Name
-            );
+            await _userManager.UpdateAsync(user);
+            return _mapper.Map<GetUserDTO>(user);
+        }
+
+        public async Task<GetUserDTO> AdminUpdateUserAsync(Guid userId, AdminUpdateUserDTO dto)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) throw new KeyNotFoundException("User not found");
+
+            if (!string.IsNullOrWhiteSpace(dto.UserName)) user.UserName = dto.UserName;
+            if (!string.IsNullOrWhiteSpace(dto.FullName)) user.FullName = dto.FullName;
+            if (!string.IsNullOrWhiteSpace(dto.Email)) user.Email = dto.Email;
+            if (dto.Role.HasValue) user.Role = dto.Role.Value;
+            if (dto.EmailConfirmed.HasValue) user.EmailConfirmed = dto.EmailConfirmed.Value;
+            if (dto.LockoutEnabled.HasValue) user.LockoutEnabled = dto.LockoutEnabled.Value;
+            if (dto.ExperiencePoints.HasValue) user.ExperiencePoints = dto.ExperiencePoints.Value;
+            if (dto.Level.HasValue) user.Level = dto.Level.Value;
+            if (dto.Coins.HasValue) user.Coins = dto.Coins.Value;
 
             if (!string.IsNullOrWhiteSpace(dto.NewPassword))
             {
@@ -116,7 +127,10 @@ namespace EduCodePlatform.Application.Services
                 await _userManager.ResetPasswordAsync(user, token, dto.NewPassword);
             }
 
-            await _unitOfWork.SaveChangesAsync();
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+
             return _mapper.Map<GetUserDTO>(user);
         }
 
@@ -127,8 +141,12 @@ namespace EduCodePlatform.Application.Services
             if (user == null)
                 throw new KeyNotFoundException("User not found");
 
-            _unitOfWork.Users.Delete(user);
-            await _unitOfWork.SaveChangesAsync();
+            var result = await _userManager.DeleteAsync(user);
+
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
         }
     }
 }
