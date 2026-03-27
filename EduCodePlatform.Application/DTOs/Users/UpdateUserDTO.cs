@@ -1,4 +1,6 @@
-﻿namespace EduCodePlatform.Application.DTOs.Users
+﻿using Microsoft.AspNetCore.Http;
+
+namespace EduCodePlatform.Application.DTOs.Users
 {
     public class UpdateUserDTO
     {

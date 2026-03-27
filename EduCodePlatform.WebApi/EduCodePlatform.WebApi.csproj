@@ -28,6 +28,7 @@
     <Folder Include="wwwroot\uploads\lessons\content\" />
     <Folder Include="wwwroot\uploads\lessons\covers\" />
     <Folder Include="wwwroot\uploads\modules\" />
+    <Folder Include="wwwroot\uploads\users\" />
   </ItemGroup>
 
 </Project>
