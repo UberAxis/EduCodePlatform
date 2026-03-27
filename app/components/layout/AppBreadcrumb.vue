@@ -2,7 +2,7 @@
 const route = useRoute()
 
 const labels: Record<string, string> = {
-  lessons: 'Уроки',
+  lessons: 'Модули',
   profile: 'Профиль',
   login: 'Войти',
   register: 'Регистрация',

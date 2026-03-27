@@ -17,6 +17,7 @@ import AppHeader from './components/layout/AppHeader.vue';
 <style>
 @import "tailwindcss";
 @import "@nuxt/ui";
+@plugin "@tailwindcss/typography";
 
 @theme {
   --font-sans: 'Nunito', sans-serif;

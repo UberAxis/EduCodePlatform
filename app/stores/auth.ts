@@ -1,91 +1,110 @@
-// stores/auth.ts
 import { defineStore } from 'pinia'
-
-// ========================= MOCK =========================
-// Тестовый пользователь для моковой авторизации
-const MOCK_USER = { id: 1, name: 'testuser', password: 'test123', xp: 120, level: 2, role: 'student' }
-// ========================================================
 
 export interface AuthUser {
   id: number
-  name: string
+  userName: string
   xp: number
-  role: string
   level: number
+  role: string
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<AuthUser | null>(null)
-  const isAuthenticated = computed(() => !!user.value)
+  const userCookie = useCookie<AuthUser | null>('auth_user', {
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/'
+  })
 
-  // ========================= MOCK =========================
-  async function login(name: string, password: string): Promise<void> {
-    // Имитация задержки сети
-    await new Promise(resolve => setTimeout(resolve, 600))
+  const _user = ref<AuthUser | null>(userCookie.value || null)
+  
+  const isMock = ref(true) // ЯДЕРНАЯ КНОПКА переключает мока на реальный АПИ
 
-    if (name === MOCK_USER.name && password === MOCK_USER.password) {
-      user.value = { id: MOCK_USER.id, name: MOCK_USER.name, xp: MOCK_USER.xp, level: MOCK_USER.level, role: MOCK_USER.role }
+  const API_URL = 'http://localhost:5145/api'
+
+  const MOCK_DATA: AuthUser = { 
+    id: 1, 
+    userName: 'Junior_Coder', 
+    xp: 150, 
+    level: 2, 
+    role: 'User' 
+  }
+
+  const user = computed(() => {
+    if (!_user.value) return null
+    return {
+      ..._user.value,
+      name: _user.value.userName 
+    }
+  })
+
+  const username = computed(() => _user.value?.userName)
+  const isAuthenticated = computed(() => !!_user.value)
+
+  async function login(userName: string, password: string): Promise<void> {
+    if (isMock.value) {
+      await new Promise(res => setTimeout(res, 500))
+      const mockUser = { ...MOCK_DATA, userName }
+      _user.value = mockUser
+      userCookie.value = mockUser
       return
     }
-    throw new Error('Неверное имя пользователя или пароль')
-  }
-  // ========================================================
 
-  // ----- РЕАЛЬНЫЙ login (раскомментировать когда бэк готов) -----
-  // async function login(name: string, password: string): Promise<void> {
-  //   const res = await fetch('http://localhost:5145/api/User/login', {
-  //     method: 'POST',
-  //     headers: { 'Content-Type': 'application/json' },
-  //     credentials: 'include', // важно для HttpOnly куки
-  //     body: JSON.stringify({ name, password }),
-  //   })
-  //   if (res.status === 401) throw new Error('Неверное имя пользователя или пароль')
-  //   if (!res.ok) throw new Error('Ошибка сервера. Попробуйте позже')
-  //   const data = await res.json()
-  //   // user.value = { id: data.id, name: data.name, role: data.role, xp: data.xp, level: data.level }
+    try {
+      const data = await $fetch<any>(`${API_URL}/User/login`, {
+        method: 'POST',
+        body: { userName, password },
+      })
+      
+      const loggedUser = {
+        id: data.id,
+        userName: data.userName,
+        xp: data.xp || 0,
+        level: data.level || 1,
+        role: data.role || 'User'
+      }
 
-  // }
-  // ---------------------------------------------------------------
-
-  // ========================= MOCK =========================
-  async function register(name: string, password: string): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, 600))
-
-    if (name === MOCK_USER.name) {
-      throw new Error('Пользователь с таким именем уже существует')
+      _user.value = loggedUser
+      userCookie.value = loggedUser
+    } catch (err: any) {
+      if (err.status === 401) throw new Error('Неверный логин или пароль')
+      throw new Error('Ошибка сервера')
     }
-    // После "регистрации" сразу логиним
-    user.value = { id: 0, name, xp: 0, level: 1, role: 'student' }
-  }
-  // ========================================================
-
-  // ----- РЕАЛЬНЫЙ register (раскомментировать когда бэк готов) -----
-  // async function register(name: string, password: string): Promise<void> {
-  //   const res = await fetch('http://localhost:5145/api/User/register', {
-  //     method: 'POST',
-  //     headers: { 'Content-Type': 'application/json' },
-  //     body: JSON.stringify({ name, password }),
-  //   })
-  //   if (res.status === 409) throw new Error('Пользователь с таким именем уже существует')
-  //   if (!res.ok) throw new Error('Ошибка сервера. Попробуйте позже')
-  //   // После регистрации сразу логиним
-  //   await login(name, password)
-  // }
-  // -----------------------------------------------------------------
-
-  async function logout(): Promise<void> {
-    // ========================= MOCK =========================
-    user.value = null
-    // ========================================================
-
-    // ----- РЕАЛЬНЫЙ logout (раскомментировать когда бэк готов) -----
-    // await fetch('http://localhost:5145/api/User/logout', {
-    //   method: 'POST',
-    //   credentials: 'include',
-    // })
-    // user.value = null
-    // ---------------------------------------------------------------
   }
 
-  return { user, isAuthenticated, login, register, logout }
+  async function register(userName: string, password: string): Promise<void> {
+    if (isMock.value) {
+      await new Promise(res => setTimeout(res, 500))
+      await login(userName, password)
+      return
+    }
+
+    try {
+      await $fetch(`${API_URL}/User/register`, {
+        method: 'POST',
+        body: { userName, password },
+      })
+      await login(userName, password)
+    } catch (err: any) {
+      if (err.status === 409) throw new Error('Логин уже занят')
+      throw new Error('Ошибка регистрации')
+    }
+  }
+
+  function logout() {
+    _user.value = null
+    userCookie.value = null
+    if (!isMock.value) {
+      $fetch(`${API_URL}/User/logout`, { method: 'POST' }).catch(() => {})
+    }
+    navigateTo('/login')
+  }
+
+  return { 
+    user, 
+    username, 
+    isAuthenticated, 
+    login, 
+    register, 
+    logout, 
+    isMock 
+  }
 })

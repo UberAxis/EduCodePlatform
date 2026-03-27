@@ -46,6 +46,7 @@ app/assets/css/main.css
 app/components/layout/AppBreadcrumb.vue
 app/components/layout/AppFooter.vue
 app/components/layout/AppHeader.vue
+app/components/ui/CodeEditor.vue
 app/middleware/auth.ts
 app/middleware/guest.ts
 app/pages/index.vue
@@ -56,6 +57,7 @@ app/pages/lessons/index.vue
 app/pages/login.vue
 app/pages/profile.vue
 app/pages/register.vue
+app/plugins/monaco.client.ts
 app/stores/auth.ts
 app/stores/study.ts
 nuxt.config.ts
@@ -69,6 +71,107 @@ tsconfig.json
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="app/components/ui/CodeEditor.vue">
+<template>
+  <div
+    class="rounded-lg overflow-hidden border border-slate-200 shadow-sm"
+    :style="{ height }"
+  >
+    <ClientOnly>
+      <vue-monaco-editor
+        v-model:value="localValue"
+        :language="language"
+        :theme="theme"
+        :options="editorOptions"
+        style="width: 100%; height: 100%;"
+        @mount="handleMount"
+      />
+      <template #fallback>
+        <div
+          class="flex items-center justify-center bg-slate-900 text-white font-mono text-sm w-full h-full"
+        >
+          <UIcon name="i-lucide-loader" class="animate-spin mr-2" />
+          Запуск редактора...
+        </div>
+      </template>
+    </ClientOnly>
+  </div>
+</template>
+
+<script setup lang="ts">
+const props = defineProps({
+  modelValue: String,
+  language: { type: String, default: 'javascript' },
+  theme: { type: String, default: 'vs-dark' },
+  height: { type: String, default: '400px' }
+})
+
+const emit = defineEmits(['update:modelValue', 'mount'])
+
+const localValue = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val)
+})
+
+const editorOptions = {
+  minimap: { enabled: false },
+  fontSize: 16,
+  lineNumbers: 'on',
+  automaticLayout: true,
+  scrollBeyondLastLine: false,
+  fixedOverflowWidgets: true,
+  roundedSelection: true,
+  padding: { top: 16, bottom: 16 }
+}
+
+const handleMount = (editorInstance: any) => {
+  nextTick(() => {
+    editorInstance.layout()
+  })
+  emit('mount', editorInstance)
+}
+</script>
+</file>
+
+<file path="app/plugins/monaco.client.ts">
+import { install as VueMonacoEditorPlugin } from '@guolao/vue-monaco-editor'
+
+export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.vueApp.use(VueMonacoEditorPlugin, {
+    paths: {
+      vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min/vs',
+    },
+  })
+})
+</file>
+
+<file path=".gitignore">
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea
+
+# Local env files
+.env
+.env.*
+!.env.example
+</file>
 
 <file path="app/assets/css/main.css">
 /* @import "tailwindcss";
@@ -335,136 +438,627 @@ export default defineNuxtRouteMiddleware(() => {
 </file>
 
 <file path="app/pages/lessons/[moduleId]/[lessonId]/index.vue">
+<!-- pages/lessons/[moduleId]/[lessonId]/index.vue -->
 <template>
-  <div class="p-8 text-center">
-    <p class="text-xl font-bold text-highlighted">В разработке</p>
-    <p class="text-muted">{{ $route.path }}</p>
+  <div class="min-h-screen bg-muted py-10 px-4">
+    <div class="max-w-3xl mx-auto flex flex-col gap-8">
+
+      <!-- Назад -->
+      <UButton
+        :label="currentModule?.title ?? 'Назад'"
+        icon="i-lucide-arrow-left"
+        variant="ghost"
+        color="neutral"
+        :to="`/lessons/${moduleId}`"
+        class="self-start"
+      />
+
+      <!-- Не найдено -->
+      <UCard v-if="!currentLesson">
+        <div class="flex flex-col items-center gap-3 py-8 text-center">
+          <UIcon name="i-lucide-frown" class="size-12 text-muted" />
+          <p class="text-lg font-bold text-highlighted">Урок не найден</p>
+          <UButton label="Вернуться к модулю" :to="`/lessons/${moduleId}`" />
+        </div>
+      </UCard>
+
+      <template v-else>
+        <!-- Шапка урока -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <UBadge
+              v-if="currentLesson.isCompleted"
+              label="Пройден"
+              icon="i-lucide-check-circle"
+              color="success"
+              variant="subtle"
+            />
+            <UBadge
+              v-if="currentLesson.task"
+              label="Есть практика"
+              icon="i-lucide-code-2"
+              color="secondary"
+              variant="subtle"
+            />
+          </div>
+          <h1 class="text-3xl font-extrabold text-highlighted">{{ currentLesson.title }}</h1>
+          <p class="text-lg text-muted">{{ currentLesson.description }}</p>
+        </div>
+
+        <!-- Контент урока в Markdown -->
+        <UCard>
+          <div
+            class="prose prose-slate dark:prose-invert max-w-none"
+            v-html="renderedContent"
+          />
+        </UCard>
+
+        <!-- Навигация -->
+        <div class="flex items-center justify-between gap-4 flex-wrap">
+          <UButton
+            v-if="prevLesson"
+            :label="prevLesson.title"
+            icon="i-lucide-arrow-left"
+            variant="outline"
+            color="neutral"
+            :to="`/lessons/${moduleId}/${prevLesson.id}`"
+          />
+          <div v-else />
+
+          <div class="flex items-center gap-3">
+            <!-- Есть задание — кнопка перейти -->
+            <UButton
+              v-if="currentLesson.task"
+              label="Перейти к заданию"
+              icon="i-lucide-code-2"
+              size="lg"
+              :to="`/lessons/${moduleId}/${lessonId}/task`"
+            />
+
+            <!-- Нет задания — отметить пройденным -->
+            <UButton
+              v-else-if="!currentLesson.isCompleted"
+              label="Отметить пройденным"
+              icon="i-lucide-check"
+              size="lg"
+              :loading="completing"
+              @click="handleComplete"
+            />
+
+            <UButton
+              v-if="nextLesson"
+              :label="nextLesson.title"
+              trailing-icon="i-lucide-arrow-right"
+              variant="outline"
+              :to="`/lessons/${moduleId}/${nextLesson.id}`"
+            />
+          </div>
+        </div>
+      </template>
+
+    </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { marked } from 'marked'
+import { useStudyStore } from '~/stores/study'
+
+definePageMeta({ middleware: 'auth' })
+
+const route = useRoute()
+const study = useStudyStore()
+const toast = useToast()
+
+const moduleId = computed(() => String(route.params.moduleId))
+const lessonId = computed(() => String(route.params.lessonId))
+const currentModule = computed(() => study.getModuleById(moduleId.value))
+const currentLesson = computed(() => study.getLessonById(moduleId.value, lessonId.value))
+
+// Рендеринг Markdown → HTML
+const renderedContent = computed(() => {
+  if (!currentLesson.value?.content) return ''
+  return marked(currentLesson.value.content)
+})
+
+const prevLesson = computed(() => {
+  const lessons = currentModule.value?.lessons ?? []
+  const idx = lessons.findIndex(l => String(l.id) === lessonId.value)
+  return idx > 0 ? lessons[idx - 1] : null
+})
+
+const nextLesson = computed(() => {
+  const lessons = currentModule.value?.lessons ?? []
+  const idx = lessons.findIndex(l => String(l.id) === lessonId.value)
+  return idx < lessons.length - 1 ? lessons[idx + 1] : null
+})
+
+const completing = ref(false)
+
+async function handleComplete() {
+  completing.value = true
+  try {
+    await study.markLessonCompleted(moduleId.value, lessonId.value)
+    toast.add({ title: 'Урок пройден! 🎉', color: 'success', icon: 'i-lucide-check-circle' })
+  } catch {
+    toast.add({ title: 'Не удалось сохранить прогресс', color: 'error', icon: 'i-lucide-circle-x' })
+  } finally {
+    completing.value = false
+  }
+}
+
+onMounted(() => {
+  if (!study.modules.length) study.fetchModules()
+})
+</script>
 </file>
 
 <file path="app/pages/lessons/[moduleId]/[lessonId]/task.vue">
 <template>
-  <div class="p-8 text-center">
-    <p class="text-xl font-bold text-highlighted">В разработке</p>
-    <p class="text-muted">{{ $route.path }}</p>
+  <div class="min-h-screen bg-muted py-10 px-4">
+    <div class="max-w-5xl mx-auto flex flex-col gap-6">
+
+      <!-- Назад -->
+      <UButton
+        label="К уроку"
+        icon="i-lucide-arrow-left"
+        variant="ghost"
+        color="neutral"
+        :to="`/lessons/${moduleId}/${lessonId}`"
+        class="self-start"
+      />
+
+      <!-- Не найдено -->
+      <UCard v-if="!task">
+        <div class="flex flex-col items-center gap-3 py-8 text-center">
+          <UIcon name="i-lucide-frown" class="size-12 text-muted" />
+          <p class="text-lg font-bold text-highlighted">Задание не найдено</p>
+          <UButton label="Вернуться к уроку" :to="`/lessons/${moduleId}/${lessonId}`" />
+        </div>
+      </UCard>
+
+      <template v-else>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- Левая колонка — условие -->
+          <div class="flex flex-col gap-4">
+            <UCard>
+              <div class="flex flex-col gap-4">
+                <div class="flex items-start gap-3">
+                  <div class="size-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <UIcon name="i-lucide-target" class="size-5 text-primary" />
+                  </div>
+                  <div>
+                    <h1 class="text-xl font-extrabold text-highlighted">{{ task.title }}</h1>
+                    <p class="text-muted mt-1">{{ task.description }}</p>
+                  </div>
+                </div>
+
+                <USeparator />
+
+                <div class="flex items-center gap-2 text-sm text-muted">
+                  <UIcon name="i-lucide-zap" class="size-4 text-primary" />
+                  <span>Награда: <strong class="text-primary">+{{ task.xpReward }} XP</strong></span>
+                </div>
+              </div>
+            </UCard>
+
+            <!-- Результат выполнения -->
+            <UCard v-if="result !== null">
+              <template #header>
+                <div class="flex items-center gap-2">
+                  <UIcon
+                    :name="result.success ? 'i-lucide-check-circle' : 'i-lucide-circle-x'"
+                    :class="result.success ? 'text-success' : 'text-error'"
+                    class="size-5"
+                  />
+                  <span class="font-bold" :class="result.success ? 'text-success' : 'text-error'">
+                    {{ result.success ? 'Отлично! Всё работает' : 'Есть ошибка' }}
+                  </span>
+                </div>
+              </template>
+              <pre class="text-sm font-mono whitespace-pre-wrap break-all"
+                :class="result.success ? 'text-success' : 'text-error'"
+              >{{ result.output }}</pre>
+            </UCard>
+          </div>
+
+          <!-- Правая колонка — редактор -->
+          <div class="flex flex-col gap-4">
+            <UiCodeEditor
+              v-model="code"
+              language="javascript"
+              height="400px"
+            />
+
+            <div class="flex gap-3">
+              <UButton
+                label="Сбросить"
+                icon="i-lucide-rotate-ccw"
+                variant="ghost"
+                color="neutral"
+                size="xl"
+                class="flex-1"
+                @click="resetCode"
+              />
+              <UButton
+                label="Запустить"
+                icon="i-lucide-play"
+                size="xl"
+                class="flex-1"
+                :loading="running"
+                @click="runCode"
+              />
+            </div>
+
+            <!-- Сдать задание -->
+            <UButton
+              v-if="result?.success && !isCompleted"
+              label="Сдать задание и получить XP"
+              icon="i-lucide-trophy"
+              size="xl"
+              class="w-full"
+              color="success"
+              :loading="submitting"
+              @click="handleSubmit"
+            />
+
+            <UAlert
+              v-if="isCompleted"
+              color="success"
+              variant="soft"
+              icon="i-lucide-check-circle"
+              title="Задание уже выполнено!"
+              description="XP начислен. Можешь перейти к следующему уроку."
+            />
+          </div>
+
+        </div>
+      </template>
+
+    </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { useStudyStore } from '~/stores/study'
+import { useAuthStore } from '~/stores/auth'
+
+definePageMeta({ middleware: 'auth' })
+
+const route = useRoute()
+const study = useStudyStore()
+const auth = useAuthStore()
+const toast = useToast()
+
+const moduleId = computed(() => String(route.params.moduleId))
+const lessonId = computed(() => String(route.params.lessonId))
+const currentLesson = computed(() => study.getLessonById(moduleId.value, lessonId.value))
+const task = computed(() => currentLesson.value?.task ?? null)
+const isCompleted = computed(() => currentLesson.value?.isCompleted ?? false)
+
+const code = ref('')
+const running = ref(false)
+const submitting = ref(false)
+const result = ref<{ success: boolean; output: string } | null>(null)
+
+function resetCode() {
+  code.value = task.value?.initialCode ?? ''
+  result.value = null
+}
+
+// ========================= MOCK =========================
+// Запуск кода через Function() — только для мока, небезопасно в продакшне
+function runCode() {
+  if (!code.value.trim()) return
+  running.value = true
+  result.value = null
+
+  setTimeout(() => {
+    try {
+      const logs: string[] = []
+      const fakeConsole = { log: (...args: unknown[]) => logs.push(args.join(' ')) }
+      // eslint-disable-next-line no-new-func
+      new Function('console', code.value)(fakeConsole)
+      result.value = {
+        success: true,
+        output: logs.length ? logs.join('\n') : '✓ Код выполнен без ошибок',
+      }
+    } catch (e: unknown) {
+      result.value = {
+        success: false,
+        output: e instanceof Error ? e.message : 'Неизвестная ошибка',
+      }
+    } finally {
+      running.value = false
+    }
+  }, 500)
+}
+// ========================================================
+
+// ----- РЕАЛЬНЫЙ runCode (раскомментировать когда бэк готов) -----
+// async function runCode() {
+//   if (!code.value.trim()) return
+//   running.value = true
+//   result.value = null
+//   try {
+//     const res = await fetch('http://localhost:5145/api/Task/run', {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json' },
+//       credentials: 'include',
+//       body: JSON.stringify({ code: code.value, taskId: task.value?.id }),
+//     })
+//     const data = await res.json()
+//     result.value = { success: data.success, output: data.output }
+//   } catch {
+//     result.value = { success: false, output: 'Ошибка соединения с сервером' }
+//   } finally {
+//     running.value = false
+//   }
+// }
+// ----------------------------------------------------------------
+
+async function handleSubmit() {
+  if (!task.value) return
+  submitting.value = true
+  try {
+    await study.markLessonCompleted(moduleId.value, lessonId.value)
+
+    // ========================= MOCK =========================
+    if (auth.user) auth.user.xp += task.value.xpReward
+    // ========================================================
+
+    // ----- РЕАЛЬНЫЙ XP (раскомментировать когда бэк готов) -----
+    // const res = await fetch(`http://localhost:5145/api/User/${auth.user?.id}`, {
+    //   credentials: 'include',
+    // })
+    // const data = await res.json()
+    // if (auth.user) { auth.user.xp = data.xp; auth.user.level = data.level }
+    // ------------------------------------------------------------
+
+    toast.add({
+      title: `+${task.value.xpReward} XP получено! 🎉`,
+      description: 'Задание выполнено, продолжай в том же духе!',
+      color: 'success',
+      icon: 'i-lucide-trophy',
+    })
+  } catch {
+    toast.add({ title: 'Не удалось сохранить прогресс', color: 'error', icon: 'i-lucide-circle-x' })
+  } finally {
+    submitting.value = false
+  }
+}
+
+onMounted(async () => {
+  if (!study.modules.length) await study.fetchModules()
+  resetCode()
+})
+</script>
 </file>
 
 <file path="app/pages/lessons/[moduleId]/index.vue">
 <template>
-  <UContainer class="py-8">
-    <template v-if="currentModule">
-      <div class="mb-6">
-        <p class="text-3xl font-extrabold text-highlighted">{{ currentModule.title }}</p>
-        <p class="text-lg text-muted mt-2">{{ currentModule.description }}</p>
+  <div class="min-h-screen bg-muted py-10 px-4">
+    <div class="max-w-3xl mx-auto flex flex-col gap-8">
+
+      <!-- Назад -->
+      <UButton
+        label="Все модули"
+        icon="i-lucide-arrow-left"
+        variant="ghost"
+        color="neutral"
+        to="/lessons"
+        class="self-start"
+      />
+
+      <!-- Загрузка -->
+      <div v-if="study.loading" class="flex flex-col gap-4">
+        <USkeleton class="h-10 w-1/2" />
+        <USkeleton class="h-5 w-3/4" />
+        <USkeleton v-for="i in 3" :key="i" class="h-24 w-full" />
       </div>
 
-      <div class="flex flex-col gap-3">
-        <UCard
-          v-for="lesson in currentModule.lessons"
-          :key="lesson.id"
-          class="cursor-pointer hover:shadow-md transition-shadow"
-          @click="navigateTo(`/lessons/${currentModule.id}/${lesson.id}`)"
-        >
-          <div class="flex items-center gap-4">
-            <div class="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary font-extrabold text-lg shrink-0">
-              {{ lesson.order }}
+      <!-- Модуль не найден -->
+      <UCard v-else-if="!currentModule">
+        <div class="flex flex-col items-center gap-3 py-8 text-center">
+          <UIcon name="i-lucide-frown" class="size-12 text-muted" />
+          <p class="text-lg font-bold text-highlighted">Модуль не найден</p>
+          <UButton label="Вернуться к модулям" to="/lessons" />
+        </div>
+      </UCard>
+
+      <template v-else>
+        <!-- Заголовок модуля -->
+        <div class="flex items-start gap-4">
+          <div class="size-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <UIcon :name="currentModule.icon" class="size-8 text-primary" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <h1 class="text-3xl font-extrabold text-highlighted">{{ currentModule.title }}</h1>
+            <p class="text-lg text-muted">{{ currentModule.description }}</p>
+          </div>
+        </div>
+
+        <!-- Прогресс модуля -->
+        <UCard>
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center justify-between text-sm">
+              <span class="font-bold">Прогресс модуля</span>
+              <span class="text-muted">
+                {{ currentModule.lessons.filter(l => l.isCompleted).length }} / {{ currentModule.lessons.length }}
+              </span>
             </div>
-            <div class="flex-1">
-              <p class="text-base font-bold text-highlighted">{{ lesson.title }}</p>
-              <p class="text-sm text-muted">{{ lesson.description }}</p>
-            </div>
-            <UIcon name="i-lucide-chevron-right" class="size-5 text-muted shrink-0" />
+            <UProgress :model-value="moduleProgress" color="primary" size="md" />
           </div>
         </UCard>
-      </div>
-    </template>
 
-    <div v-else class="text-center py-16">
-      <p class="text-2xl font-extrabold text-highlighted mb-2">Модуль не найден</p>
-      <UButton label="Вернуться к урокам" to="/lessons" class="mt-4" size="xl" />
+        <!-- Список уроков -->
+        <div class="flex flex-col gap-4">
+          <UCard
+            v-for="(lesson, index) in currentModule.lessons"
+            :key="lesson.id"
+            class="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+            @click="navigateTo(`/lessons/${moduleId}/${lesson.id}`)"
+          >
+            <div class="flex items-center gap-4">
+              <!-- Номер / галочка -->
+              <div
+                class="size-10 rounded-full flex items-center justify-center shrink-0 font-bold text-base"
+                :class="lesson.isCompleted
+                  ? 'bg-success/10 text-success'
+                  : 'bg-primary/10 text-primary'"
+              >
+                <UIcon v-if="lesson.isCompleted" name="i-lucide-check" class="size-5" />
+                <span v-else>{{ index + 1 }}</span>
+              </div>
+
+              <div class="flex flex-col gap-0.5 flex-1">
+                <h3 class="font-bold text-highlighted">{{ lesson.title }}</h3>
+                <p class="text-sm text-muted">{{ lesson.description }}</p>
+              </div>
+
+              <div class="flex items-center gap-2 shrink-0">
+                <UBadge
+                  v-if="lesson.task"
+                  label="Практика"
+                  icon="i-lucide-code-2"
+                  variant="subtle"
+                  color="secondary"
+                  size="sm"
+                />
+                <UIcon name="i-lucide-chevron-right" class="size-5 text-muted" />
+              </div>
+            </div>
+          </UCard>
+        </div>
+      </template>
+
     </div>
-  </UContainer>
+  </div>
 </template>
 
 <script setup lang="ts">
+import { useStudyStore } from '~/stores/study'
+
+definePageMeta({ middleware: 'auth' })
+
 const route = useRoute()
+const study = useStudyStore()
+const moduleId = computed(() => String(route.params.moduleId))
+const currentModule = computed(() => study.getModuleById(moduleId.value))
+const moduleProgress = computed(() => {
+  const m = currentModule.value
+  if (!m || !m.lessons.length) return 0
+  return Math.round((m.lessons.filter(l => l.isCompleted).length / m.lessons.length) * 100)
+})
 
-const modules = [
-  {
-    id: 1,
-    title: 'Основы программирования',
-    description: 'Знакомство с базовыми понятиями: переменные, типы данных, условия и циклы.',
-    lessons: [
-      { id: 1, order: 1, title: 'Что такое программирование?', description: 'Введение в мир кода' },
-      { id: 2, order: 2, title: 'Переменные и типы данных', description: 'Как хранить информацию' },
-      { id: 3, order: 3, title: 'Условия if/else', description: 'Учим программу принимать решения' },
-    ]
-  },
-  {
-    id: 2,
-    title: 'Функции и алгоритмы',
-    description: 'Пишем переиспользуемый код.',
-    lessons: [
-      { id: 1, order: 1, title: 'Что такое функция?', description: 'Основы' },
-      { id: 2, order: 2, title: 'Аргументы и возврат', description: 'Передаём данные в функцию' },
-    ]
-  },
-  {
-    id: 42,
-    title: 'Бизнес-совет от Тинькова',
-    description: '«Чем ходить просить и побираться — лучше укради»',
-    lessons: []
-  }
-]
-
-const currentModule = computed(() =>
-  modules.find(m => m.id === Number(route.params.moduleId))
-)
+onMounted(() => {
+  if (!study.modules.length) study.fetchModules()
+})
 </script>
 </file>
 
 <file path="app/pages/lessons/index.vue">
 <template>
-  <UContainer class="py-8">
-    <div class="mb-6">
-      <p class="text-3xl font-extrabold text-highlighted">Каталог модулей</p>
-      <p class="text-lg text-muted mt-2">Выбери модуль и начни учиться</p>
-    </div>
+  <div class="min-h-screen bg-muted py-10 px-4">
+    <div class="max-w-4xl mx-auto flex flex-col gap-8">
 
-    <div class="flex flex-col gap-3">
-      <UCard
-        v-for="module in modules"
-        :key="module.id"
-        class="cursor-pointer hover:shadow-md transition-shadow"
-        @click="navigateTo(`/lessons/${module.id}`)"
-      >
-        <div class="flex items-center gap-4">
-          <div class="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary font-extrabold text-lg shrink-0">
-            {{ module.order }}
+      <!-- Шапка -->
+      <div class="flex flex-col gap-2">
+        <h1 class="text-3xl font-extrabold text-highlighted">📚 Модули</h1>
+        <p class="text-lg text-muted">Выбери модуль и начни учиться</p>
+      </div>
+
+      <!-- Общий прогресс -->
+      <UCard>
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-base">Общий прогресс</span>
+            <span class="text-muted text-sm">{{ study.totalProgress }}%</span>
           </div>
-          <div class="flex-1">
-            <p class="text-base font-bold text-highlighted">{{ module.title }}</p>
-            <p class="text-sm text-muted">{{ module.description }}</p>
-          </div>
-          <UIcon name="i-lucide-chevron-right" class="size-5 text-muted shrink-0" />
+          <UProgress :model-value="study.totalProgress" color="primary" size="md" />
         </div>
       </UCard>
+
+      <!-- Загрузка -->
+      <div v-if="study.loading" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <UCard v-for="i in 4" :key="i">
+          <div class="flex flex-col gap-3 py-2">
+            <USkeleton class="h-8 w-3/4" />
+            <USkeleton class="h-4 w-full" />
+            <USkeleton class="h-4 w-1/2" />
+          </div>
+        </UCard>
+      </div>
+
+      <!-- Ошибка -->
+      <UAlert
+        v-else-if="study.error"
+        color="error"
+        variant="soft"
+        icon="i-lucide-circle-x"
+        :title="study.error"
+      />
+
+      <!-- Список модулей -->
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <UCard
+          v-for="module in study.modules"
+          :key="module.id"
+          class="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+          @click="navigateTo(`/lessons/${module.id}`)"
+        >
+          <div class="flex flex-col gap-4 py-2">
+            <div class="flex items-start gap-4">
+              <div class="size-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <UIcon :name="module.icon" class="size-6 text-primary" />
+              </div>
+              <div class="flex flex-col gap-1 flex-1">
+                <h2 class="text-lg font-bold text-highlighted">{{ module.title }}</h2>
+                <p class="text-sm text-muted">{{ module.description }}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-sm text-muted">
+              <span class="flex items-center gap-1">
+                <UIcon name="i-lucide-book-open" class="size-4" />
+                {{ module.lessons.length }} уроков
+              </span>
+              <span class="flex items-center gap-1">
+                <UIcon name="i-lucide-check-circle" class="size-4 text-success" />
+                {{ module.lessons.filter(l => l.isCompleted).length }} пройдено
+              </span>
+            </div>
+
+            <UProgress
+              :model-value="moduleProgress(module)"
+              color="primary"
+              size="sm"
+            />
+          </div>
+        </UCard>
+      </div>
+
     </div>
-  </UContainer>
+  </div>
 </template>
 
 <script setup lang="ts">
-// TODO: заменить на запрос к бэку
-// const { data: modules } = await useFetch('http://localhost:5145/api/modules')
+import { useStudyStore } from '~/stores/study'
+import type { Module } from '~/stores/study'
 
-const modules = [
-  { id: 1, order: 1, title: 'Основы программирования', description: 'Переменные, типы данных, условия и циклы' },
-  { id: 2, order: 2, title: 'Функции и алгоритмы', description: 'Пишем переиспользуемый код' },
-  { id: 3, order: 3, title: 'Работа с данными', description: 'Массивы, объекты и структуры данных' },
-]
+definePageMeta({ middleware: 'auth' })
+
+const study = useStudyStore()
+
+const moduleProgress = (module: Module) => {
+  if (!module.lessons.length) return 0
+  return Math.round((module.lessons.filter(l => l.isCompleted).length / module.lessons.length) * 100)
+}
+
+onMounted(() => {
+  if (!study.modules.length) study.fetchModules()
+})
 </script>
 </file>
 
@@ -737,34 +1331,265 @@ async function handleLogout() {
 </file>
 
 <file path="app/stores/study.ts">
+import { defineStore } from 'pinia'
 
+export interface Task {
+  id: string
+  title: string
+  description: string
+  initialCode: string
+  xpReward: number
+}
+
+export interface Lesson {
+  id: string
+  title: string
+  description: string
+  content: string
+  task?: Task
+  isCompleted: boolean
+}
+
+export interface Module {
+  id: string
+  title: string
+  description: string
+  icon: string
+  lessons: Lesson[]
+}
+
+// ========================= MOCK DATA =========================
+const MOCK_MODULES: Module[] = [
+  {
+    id: '1',
+    title: 'Основы JavaScript',
+    description: 'Базовые концепции языка: переменные, типы данных и операторы.',
+    icon: 'i-lucide-code-2',
+    lessons: [
+      {
+        id: '1',
+        title: 'Переменные и константы',
+        description: 'Учимся хранить данные в памяти.',
+        content: `
+          <h3>Что такое переменная?</h3>
+          <p>Представь, что переменная — это коробочка, в которую можно положить данные. На наклейке написано имя, а внутри лежит значение.</p>
+          <pre class="bg-slate-900 text-white p-4 rounded-lg my-4">let box = "Игрушка";</pre>
+          <p>Теперь, когда мы скажем "box", компьютер поймет, что мы имеем в виду "Игрушку".</p>
+        `,
+        isCompleted: false,
+        task: {
+          id: 'task-1',
+          title: 'Робо-имя',
+          description: 'Объяви переменную robotName и присвой ей любое имя в кавычках.',
+          initialCode: '// Напиши код здесь\nlet robotName = "";',
+          xpReward: 50,
+        },
+      },
+      {
+        id: '2',
+        title: 'Базовая математика',
+        description: 'Сложение, вычитание и другие операторы.',
+        content: '<p>JavaScript умеет считать как калькулятор...</p>',
+        isCompleted: false,
+        task: {
+          id: 'task-2',
+          title: 'Счётчик деталей',
+          description: 'Создай переменную totalParts равную сумме 10 и 15.',
+          initialCode: '// Напиши код здесь\n',
+          xpReward: 50,
+        },
+      },
+    ],
+  },
+  {
+    id: '2',
+    title: 'Логика и циклы',
+    description: 'Управление потоком выполнения программы.',
+    icon: 'i-lucide-repeat',
+    lessons: [
+      {
+        id: '1',
+        title: 'Условия if/else',
+        description: 'Учим программу принимать решения.',
+        content: '<p>Конструкция if позволяет выполнять код только при определённом условии...</p>',
+        isCompleted: false,
+      },
+    ],
+  },
+]
+// =============================================================
+
+export const useStudyStore = defineStore('study', () => {
+  const modules = ref<Module[]>([])
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+
+  // ========================= MOCK =========================
+  async function fetchModules(): Promise<void> {
+    loading.value = true
+    error.value = null
+    await new Promise(resolve => setTimeout(resolve, 400))
+    modules.value = MOCK_MODULES
+    loading.value = false
+  }
+  // ========================================================
+
+  // ----- РЕАЛЬНЫЙ fetchModules (раскомментировать когда бэк готов) -----
+  // async function fetchModules(): Promise<void> {
+  //   loading.value = true
+  //   error.value = null
+  //   try {
+  //     const res = await fetch('http://localhost:5145/api/Module', {
+  //       credentials: 'include',
+  //     })
+  //     if (!res.ok) throw new Error('Не удалось загрузить модули')
+  //     modules.value = await res.json()
+  //   } catch (e: unknown) {
+  //     error.value = e instanceof Error ? e.message : 'Ошибка загрузки'
+  //   } finally {
+  //     loading.value = false
+  //   }
+  // }
+  // ---------------------------------------------------------------------
+
+  const getModuleById = (moduleId: string) =>
+    modules.value.find(m => String(m.id) === String(moduleId)) ?? null
+
+  const getLessonById = (moduleId: string, lessonId: string) =>
+    getModuleById(moduleId)?.lessons.find(l => String(l.id) === String(lessonId)) ?? null
+
+  const totalProgress = computed(() => {
+    const total = modules.value.reduce((sum, m) => sum + m.lessons.length, 0)
+    const done = modules.value.reduce((sum, m) => sum + m.lessons.filter(l => l.isCompleted).length, 0)
+    return total === 0 ? 0 : Math.round((done / total) * 100)
+  })
+
+  // ========================= MOCK =========================
+  async function markLessonCompleted(moduleId: string, lessonId: string): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const lesson = getLessonById(moduleId, lessonId)
+    if (lesson) lesson.isCompleted = true
+  }
+  // ========================================================
+
+  // ----- РЕАЛЬНЫЙ markLessonCompleted (раскомментировать когда бэк готов) -----
+  // async function markLessonCompleted(moduleId: string, lessonId: string): Promise<void> {
+  //   const res = await fetch(`http://localhost:5145/api/Lesson/${lessonId}/complete`, {
+  //     method: 'POST',
+  //     credentials: 'include',
+  //   })
+  //   if (!res.ok) throw new Error('Не удалось сохранить прогресс')
+  //   const lesson = getLessonById(moduleId, lessonId)
+  //   if (lesson) lesson.isCompleted = true
+  // }
+  // ---------------------------------------------------------------------------
+
+  return { modules, loading, error, fetchModules, getModuleById, getLessonById, totalProgress, markLessonCompleted }
+})
 </file>
 
-<file path=".gitignore">
-# Nuxt dev/build outputs
-.output
-.data
-.nuxt
-.nitro
-.cache
-dist
+<file path="public/robots.txt">
+User-Agent: *
+Disallow:
+</file>
 
-# Node dependencies
-node_modules
+<file path="README.md">
+# Nuxt Minimal Starter
 
-# Logs
-logs
-*.log
+Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
 
-# Misc
-.DS_Store
-.fleet
-.idea
+## Setup
 
-# Local env files
-.env
-.env.*
-!.env.example
+Make sure to install dependencies:
+
+```bash
+# npm
+npm install
+
+# pnpm
+pnpm install
+
+# yarn
+yarn install
+
+# bun
+bun install
+```
+
+## Development Server
+
+Start the development server on `http://localhost:3000`:
+
+```bash
+# npm
+npm run dev
+
+# pnpm
+pnpm dev
+
+# yarn
+yarn dev
+
+# bun
+bun run dev
+```
+
+## Production
+
+Build the application for production:
+
+```bash
+# npm
+npm run build
+
+# pnpm
+pnpm build
+
+# yarn
+yarn build
+
+# bun
+bun run build
+```
+
+Locally preview production build:
+
+```bash
+# npm
+npm run preview
+
+# pnpm
+pnpm preview
+
+# yarn
+yarn preview
+
+# bun
+bun run preview
+```
+
+Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+</file>
+
+<file path="tsconfig.json">
+{
+  // https://nuxt.com/docs/guide/concepts/typescript
+  "files": [],
+  "references": [
+    {
+      "path": "./.nuxt/tsconfig.app.json"
+    },
+    {
+      "path": "./.nuxt/tsconfig.server.json"
+    },
+    {
+      "path": "./.nuxt/tsconfig.shared.json"
+    },
+    {
+      "path": "./.nuxt/tsconfig.node.json"
+    }
+  ]
+}
 </file>
 
 <file path="app/app.vue">
@@ -1456,110 +2281,6 @@ export default defineNuxtConfig({
     "vue": "^3.5.30",
     "vue-router": "^5.0.4"
   }
-}
-</file>
-
-<file path="public/robots.txt">
-User-Agent: *
-Disallow:
-</file>
-
-<file path="README.md">
-# Nuxt Minimal Starter
-
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
-
-## Setup
-
-Make sure to install dependencies:
-
-```bash
-# npm
-npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
-</file>
-
-<file path="tsconfig.json">
-{
-  // https://nuxt.com/docs/guide/concepts/typescript
-  "files": [],
-  "references": [
-    {
-      "path": "./.nuxt/tsconfig.app.json"
-    },
-    {
-      "path": "./.nuxt/tsconfig.server.json"
-    },
-    {
-      "path": "./.nuxt/tsconfig.shared.json"
-    },
-    {
-      "path": "./.nuxt/tsconfig.node.json"
-    }
-  ]
 }
 </file>
 

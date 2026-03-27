@@ -90,7 +90,7 @@ const toast = useToast()
 
 const links = [
   { label: 'Главная', icon: 'i-lucide-house', to: '/' },
-  { label: 'Уроки', icon: 'i-lucide-book-open', to: '/lessons' },
+  { label: 'Модули', icon: 'i-lucide-book-open', to: '/lessons' },
   { label: 'Профиль', icon: 'i-lucide-user', to: '/profile' },
 ]
 
