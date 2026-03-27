@@ -1,0 +1,1566 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+app/app.vue
+app/assets/css/main.css
+app/components/layout/AppBreadcrumb.vue
+app/components/layout/AppFooter.vue
+app/components/layout/AppHeader.vue
+app/middleware/auth.ts
+app/middleware/guest.ts
+app/pages/index.vue
+app/pages/lessons/[moduleId]/[lessonId]/index.vue
+app/pages/lessons/[moduleId]/[lessonId]/task.vue
+app/pages/lessons/[moduleId]/index.vue
+app/pages/lessons/index.vue
+app/pages/login.vue
+app/pages/profile.vue
+app/pages/register.vue
+app/stores/auth.ts
+app/stores/study.ts
+nuxt.config.ts
+package.json
+public/favicon.ico
+public/logo.png
+public/robots.txt
+README.md
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="app/assets/css/main.css">
+/* @import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme {
+  --font-sans: 'Nunito', sans-serif;
+}
+
+:root {
+  --ui-radius: 0.5rem;
+}
+
+:root, .light {
+  --ui-primary: var(--ui-color-emerald-500);
+  --ui-secondary: var(--ui-color-amber-500);
+  --ui-success: var(--ui-color-lime-500);
+  --ui-warning: var(--ui-color-amber-500);
+  --ui-error: var(--ui-color-rose-500);
+  --ui-info: var(--ui-color-cyan-500);
+}
+
+.dark {
+  --ui-primary: var(--ui-color-emerald-400);
+  --ui-secondary: var(--ui-color-amber-400);
+  --ui-success: var(--ui-color-lime-400);
+  --ui-warning: var(--ui-color-amber-400);
+  --ui-error: var(--ui-color-rose-400);
+  --ui-info: var(--ui-color-cyan-400);
+} */
+</file>
+
+<file path="app/components/layout/AppBreadcrumb.vue">
+<script setup lang="ts">
+const route = useRoute()
+
+const labels: Record<string, string> = {
+  lessons: 'Уроки',
+  profile: 'Профиль',
+  login: 'Войти',
+  register: 'Регистрация',
+}
+
+const items = computed(() => {
+  const segments = route.path.split('/').filter(Boolean)
+  const crumbs = [{ label: 'Главная', to: '/' }]
+
+  segments.forEach((segment, index) => {
+    const path = '/' + segments.slice(0, index + 1).join('/')
+
+    let label = labels[segment] ?? segment
+
+    // Если мы внутри /lessons и это динамический сегмент
+    if (segments[0] === 'lessons' && !(segment in labels)) {
+      if (index === 1) label = `Модуль ${segment}`
+      if (index === 2) label = `Урок ${segment}`
+    }
+
+    crumbs.push({ label, to: path })
+  })
+
+  return crumbs
+})
+</script>
+<template>
+  <ClientOnly>
+    <UContainer v-if="route.path !== '/'" class="py-6">
+      <UBreadcrumb
+        :items="items"
+        :ui="{
+          link: 'text-xl',
+          separator: 'text-xl'
+        }"
+      />
+    </UContainer>
+  </ClientOnly>
+</template>
+</file>
+
+<file path="app/components/layout/AppFooter.vue">
+<template>
+  <UFooter :ui="{ root: 'border-t-0 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]' }">
+
+    <template #top>
+      <UContainer>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 pb-4">
+
+          <div class="col-span-2 md:col-span-1 flex flex-col gap-3">
+            <div class="flex items-center gap-2">
+              <img src="/logo.png" alt="logo" class="size-10" />
+              <span class="text-xl font-extrabold text-primary">Кодо<span class="text-secondary">Сфера</span></span>
+            </div>
+            <p class="text-md text-muted leading-relaxed">
+              Учимся программировать весело и легко!
+            </p>
+          </div>
+
+          <div class="flex flex-col">
+            <p class="font-extrabold text-highlighted text-lg">Обучение</p>
+            <UButton v-for="link in study" :key="link.to" :label="link.label" :to="link.to"
+              variant="link" color="neutral" size="xl" class="justify-start px-0" :ui="{ base: 'py-1' }"/>
+          </div>
+
+          <div class="flex flex-col">
+            <p class="font-extrabold text-highlighted text-lg">Аккаунт</p>
+            <UButton v-for="link in account" :key="link.to" :label="link.label" :to="link.to"
+              variant="link" color="neutral" size="xl" class="justify-start px-0" :ui="{ base: 'py-1' }"/>
+          </div>
+
+        </div>
+      </UContainer>
+    </template>
+
+    <template #left>
+      <p class="text-sm text-muted">© 2026 КодоСфера. Все права защищены</p>
+    </template>
+
+    <template #right>
+      <div class="flex gap-4">
+        <UButton label="Конфиденциальность" variant="link" color="neutral" size="sm" />
+        <UButton label="Условия использования" variant="link" color="neutral" size="sm" />
+      </div>
+    </template>
+
+  </UFooter>
+</template>
+
+<script setup lang="ts">
+const study = [
+  { label: 'Каталог модулей', to: '/lessons' },
+]
+
+const account = [
+  { label: 'Профиль', to: '/profile' },
+  { label: 'Войти', to: '/login' },
+  { label: 'Регистрация', to: '/register' },
+]
+</script>
+</file>
+
+<file path="app/components/layout/AppHeader.vue">
+<template>
+  <UHeader :ui="{ root: 'border-b-0 shadow-sm' }">
+    <template #title>
+      <NuxtLink to="/" class="flex items-center gap-2">
+        <img src="/logo.png" alt="logo" class="size-10" />
+        <span class="text-2xl font-extrabold text-primary">Кодо<span class="text-secondary">Сфера</span></span>
+      </NuxtLink>
+    </template>
+
+    <template #default>
+      <nav class="hidden md:flex items-center gap-1">
+        <UButton
+          v-for="link in links"
+          :key="link.to"
+          :label="link.label"
+          :icon="link.icon"
+          :to="link.to"
+          variant="ghost"
+          color="neutral"
+          size="xl"
+        />
+      </nav>
+    </template>
+
+    <template #right>
+      <div class="flex items-center gap-2">
+        <!-- Авторизован -->
+        <template v-if="auth.isAuthenticated">
+          <span class="text-xl hidden md:block">{{ auth.user?.name }}</span>
+          <UButton
+            label="Выйти"
+            icon="i-lucide-log-out"
+            variant="ghost"
+            color="neutral"
+            size="xl"
+            @click="handleLogout"
+          />
+        </template>
+
+        <!-- Гость -->
+        <template v-else>
+          <UButton label="Войти" variant="ghost" color="neutral" size="xl" to="/login" />
+          <UButton label="Регистрация" size="xl" to="/register" />
+        </template>
+      </div>
+    </template>
+
+    <template #body>
+      <div class="flex flex-col gap-1 p-4">
+        <UButton
+          v-for="link in links"
+          :key="link.to"
+          :label="link.label"
+          :icon="link.icon"
+          :to="link.to"
+          variant="ghost"
+          color="neutral"
+          size="xl"
+          class="justify-start"
+        />
+        <USeparator class="my-2" />
+
+        <!-- Авторизован -->
+        <template v-if="auth.isAuthenticated">
+          <UButton
+            label="Выйти"
+            icon="i-lucide-log-out"
+            variant="ghost"
+            color="neutral"
+            size="xl"
+            class="w-full justify-start"
+            @click="handleLogout"
+          />
+        </template>
+
+        <!-- Гость -->
+        <template v-else>
+          <UButton label="Войти" variant="ghost" color="neutral" size="xl" to="/login" class="w-full" />
+          <UButton label="Регистрация" size="xl" to="/register" class="w-full" />
+        </template>
+      </div>
+    </template>
+  </UHeader>
+</template>
+
+<script setup lang="ts">
+const auth = useAuthStore()
+const router = useRouter()
+const toast = useToast()
+
+const links = [
+  { label: 'Главная', icon: 'i-lucide-house', to: '/' },
+  { label: 'Уроки', icon: 'i-lucide-book-open', to: '/lessons' },
+  { label: 'Профиль', icon: 'i-lucide-user', to: '/profile' },
+]
+
+async function handleLogout() {
+  await auth.logout()
+  toast.add({ title: 'Вы вышли из аккаунта', color: 'neutral', icon: 'i-lucide-log-out' })
+  await router.push('/')
+}
+</script>
+</file>
+
+<file path="app/middleware/auth.ts">
+// middleware/auth.ts
+import { useAuthStore } from '~/stores/auth'
+
+export default defineNuxtRouteMiddleware(() => {
+  const auth = useAuthStore()
+  if (!auth.isAuthenticated) return navigateTo('/login')
+})
+</file>
+
+<file path="app/middleware/guest.ts">
+// middleware/guest.ts
+import { useAuthStore } from '~/stores/auth'
+
+export default defineNuxtRouteMiddleware(() => {
+  const auth = useAuthStore()
+  if (auth.isAuthenticated) return navigateTo('/')
+})
+</file>
+
+<file path="app/pages/lessons/[moduleId]/[lessonId]/index.vue">
+<template>
+  <div class="p-8 text-center">
+    <p class="text-xl font-bold text-highlighted">В разработке</p>
+    <p class="text-muted">{{ $route.path }}</p>
+  </div>
+</template>
+</file>
+
+<file path="app/pages/lessons/[moduleId]/[lessonId]/task.vue">
+<template>
+  <div class="p-8 text-center">
+    <p class="text-xl font-bold text-highlighted">В разработке</p>
+    <p class="text-muted">{{ $route.path }}</p>
+  </div>
+</template>
+</file>
+
+<file path="app/pages/lessons/[moduleId]/index.vue">
+<template>
+  <UContainer class="py-8">
+    <template v-if="currentModule">
+      <div class="mb-6">
+        <p class="text-3xl font-extrabold text-highlighted">{{ currentModule.title }}</p>
+        <p class="text-lg text-muted mt-2">{{ currentModule.description }}</p>
+      </div>
+
+      <div class="flex flex-col gap-3">
+        <UCard
+          v-for="lesson in currentModule.lessons"
+          :key="lesson.id"
+          class="cursor-pointer hover:shadow-md transition-shadow"
+          @click="navigateTo(`/lessons/${currentModule.id}/${lesson.id}`)"
+        >
+          <div class="flex items-center gap-4">
+            <div class="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary font-extrabold text-lg shrink-0">
+              {{ lesson.order }}
+            </div>
+            <div class="flex-1">
+              <p class="text-base font-bold text-highlighted">{{ lesson.title }}</p>
+              <p class="text-sm text-muted">{{ lesson.description }}</p>
+            </div>
+            <UIcon name="i-lucide-chevron-right" class="size-5 text-muted shrink-0" />
+          </div>
+        </UCard>
+      </div>
+    </template>
+
+    <div v-else class="text-center py-16">
+      <p class="text-2xl font-extrabold text-highlighted mb-2">Модуль не найден</p>
+      <UButton label="Вернуться к урокам" to="/lessons" class="mt-4" size="xl" />
+    </div>
+  </UContainer>
+</template>
+
+<script setup lang="ts">
+const route = useRoute()
+
+const modules = [
+  {
+    id: 1,
+    title: 'Основы программирования',
+    description: 'Знакомство с базовыми понятиями: переменные, типы данных, условия и циклы.',
+    lessons: [
+      { id: 1, order: 1, title: 'Что такое программирование?', description: 'Введение в мир кода' },
+      { id: 2, order: 2, title: 'Переменные и типы данных', description: 'Как хранить информацию' },
+      { id: 3, order: 3, title: 'Условия if/else', description: 'Учим программу принимать решения' },
+    ]
+  },
+  {
+    id: 2,
+    title: 'Функции и алгоритмы',
+    description: 'Пишем переиспользуемый код.',
+    lessons: [
+      { id: 1, order: 1, title: 'Что такое функция?', description: 'Основы' },
+      { id: 2, order: 2, title: 'Аргументы и возврат', description: 'Передаём данные в функцию' },
+    ]
+  },
+  {
+    id: 42,
+    title: 'Бизнес-совет от Тинькова',
+    description: '«Чем ходить просить и побираться — лучше укради»',
+    lessons: []
+  }
+]
+
+const currentModule = computed(() =>
+  modules.find(m => m.id === Number(route.params.moduleId))
+)
+</script>
+</file>
+
+<file path="app/pages/lessons/index.vue">
+<template>
+  <UContainer class="py-8">
+    <div class="mb-6">
+      <p class="text-3xl font-extrabold text-highlighted">Каталог модулей</p>
+      <p class="text-lg text-muted mt-2">Выбери модуль и начни учиться</p>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <UCard
+        v-for="module in modules"
+        :key="module.id"
+        class="cursor-pointer hover:shadow-md transition-shadow"
+        @click="navigateTo(`/lessons/${module.id}`)"
+      >
+        <div class="flex items-center gap-4">
+          <div class="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary font-extrabold text-lg shrink-0">
+            {{ module.order }}
+          </div>
+          <div class="flex-1">
+            <p class="text-base font-bold text-highlighted">{{ module.title }}</p>
+            <p class="text-sm text-muted">{{ module.description }}</p>
+          </div>
+          <UIcon name="i-lucide-chevron-right" class="size-5 text-muted shrink-0" />
+        </div>
+      </UCard>
+    </div>
+  </UContainer>
+</template>
+
+<script setup lang="ts">
+// TODO: заменить на запрос к бэку
+// const { data: modules } = await useFetch('http://localhost:5145/api/modules')
+
+const modules = [
+  { id: 1, order: 1, title: 'Основы программирования', description: 'Переменные, типы данных, условия и циклы' },
+  { id: 2, order: 2, title: 'Функции и алгоритмы', description: 'Пишем переиспользуемый код' },
+  { id: 3, order: 3, title: 'Работа с данными', description: 'Массивы, объекты и структуры данных' },
+]
+</script>
+</file>
+
+<file path="app/pages/profile.vue">
+<template>
+  <div class="min-h-screen bg-muted py-10 px-4">
+    <div class="max-w-2xl mx-auto flex flex-col gap-6">
+
+      <!-- ⚠️ MOCK-баннер — удалить когда бэк готов -->
+      <UAlert
+        color="warning"
+        variant="soft"
+        icon="i-lucide-flask-conical"
+        title="Моковый режим"
+        description="Данные берутся из стора, редактирование только локальное"
+      />
+
+      <!-- Карточка профиля -->
+      <UCard>
+        <template #header>
+          <div class="flex items-center gap-5 py-2">
+            <UAvatar
+              :alt="auth.user?.name"
+              size="3xl"
+              icon="i-lucide-user"
+            />
+            <div class="flex flex-col gap-1">
+              <h1 class="text-2xl font-extrabold text-highlighted">{{ auth.user?.name }}</h1>
+              <UBadge
+                :label="roleLabel"
+                variant="subtle"
+                color="primary"
+                size="lg"
+              />
+            </div>
+          </div>
+        </template>
+
+        <!-- XP и уровень -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between text-sm">
+            <span class="font-bold text-base">Уровень {{ auth.user?.level }}</span>
+            <span class="text-muted">{{ auth.user?.xp }} / {{ xpForNextLevel }} XP</span>
+          </div>
+          <UProgress :model-value="xpProgress" size="md" color="primary" />
+          <p class="text-sm text-muted">До следующего уровня: {{ xpForNextLevel - (auth.user?.xp ?? 0) }} XP</p>
+        </div>
+
+        <USeparator class="my-4" />
+
+        <!-- Статистика -->
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div class="flex flex-col gap-1">
+            <span class="text-2xl font-extrabold text-primary">{{ auth.user?.xp }}</span>
+            <span class="text-sm text-muted">Очки опыта</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-2xl font-extrabold text-primary">{{ auth.user?.level }}</span>
+            <span class="text-sm text-muted">Уровень</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-2xl font-extrabold text-primary">0</span>
+            <span class="text-sm text-muted">Уроков пройдено</span>
+          </div>
+        </div>
+      </UCard>
+
+      <!-- Карточка редактирования -->
+      <UCard>
+        <template #header>
+          <h2 class="text-lg font-bold text-highlighted">Редактировать профиль</h2>
+        </template>
+
+        <form class="flex flex-col gap-5" @submit.prevent="handleUpdate">
+          <UFormField
+            label="Новое имя пользователя"
+            :ui="{ label: 'text-base font-bold mb-1' }"
+          >
+            <UInput
+              v-model="form.name"
+              type="text"
+              :placeholder="auth.user?.name"
+              icon="i-lucide-user"
+              size="xl"
+              class="w-full"
+              autocomplete="username"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Новый пароль"
+            :ui="{ label: 'text-base font-bold mb-1' }"
+          >
+            <UInput
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="••••••••"
+              icon="i-lucide-lock"
+              size="xl"
+              class="w-full"
+              autocomplete="new-password"
+            >
+              <template #trailing>
+                <UButton
+                  :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                  variant="ghost"
+                  color="neutral"
+                  size="xl"
+                  @click="showPassword = !showPassword"
+                />
+              </template>
+            </UInput>
+          </UFormField>
+
+          <UFormField
+            label="Повторите новый пароль"
+            :ui="{ label: 'text-base font-bold mb-1' }"
+          >
+            <UInput
+              v-model="form.passwordConfirm"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="••••••••"
+              icon="i-lucide-lock-keyhole"
+              size="xl"
+              class="w-full"
+              autocomplete="new-password"
+            >
+              <template #trailing>
+                <UButton
+                  :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                  variant="ghost"
+                  color="neutral"
+                  size="xl"
+                  @click="showPassword = !showPassword"
+                />
+              </template>
+            </UInput>
+          </UFormField>
+
+          <div class="flex gap-3 justify-end">
+            <UButton
+              label="Сбросить"
+              variant="ghost"
+              color="neutral"
+              size="xl"
+              :disabled="loading"
+              @click="resetForm"
+            />
+            <UButton
+              type="submit"
+              label="Сохранить"
+              icon="i-lucide-save"
+              size="xl"
+              :loading="loading"
+            />
+          </div>
+        </form>
+      </UCard>
+
+      <!-- Опасная зона -->
+      <UCard variant="subtle">
+        <template #header>
+          <h2 class="text-lg font-bold text-error">Опасная зона</h2>
+        </template>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="font-medium text-highlighted">Выйти из аккаунта</p>
+            <p class="text-sm text-muted">Вы будете перенаправлены на страницу входа</p>
+          </div>
+          <UButton
+            label="Выйти"
+            icon="i-lucide-log-out"
+            color="error"
+            variant="soft"
+            size="xl"
+            @click="handleLogout"
+          />
+        </div>
+      </UCard>
+
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useAuthStore } from '~/stores/auth'
+
+definePageMeta({ middleware: 'auth' })
+
+const auth = useAuthStore()
+const router = useRouter()
+const toast = useToast()
+
+// XP до следующего уровня (100 XP на уровень)
+const xpForNextLevel = computed(() => (auth.user?.level ?? 1) * 100)
+const xpProgress = computed(() => {
+  const xp = auth.user?.xp ?? 0
+  return Math.min(Math.round((xp / xpForNextLevel.value) * 100), 100)
+})
+
+const roleLabel = computed(() => {
+  const map: Record<string, string> = {
+    student: 'Ученик',
+    teacher: 'Учитель',
+    admin: 'Администратор',
+  }
+  return map[auth.user?.role ?? ''] ?? auth.user?.role ?? 'Пользователь'
+})
+
+const form = reactive({ name: '', password: '', passwordConfirm: '' })
+const showPassword = ref(false)
+const loading = ref(false)
+
+function resetForm() {
+  form.name = ''
+  form.password = ''
+  form.passwordConfirm = ''
+}
+
+async function handleUpdate() {
+  if (!form.name.trim() && !form.password) {
+    toast.add({ title: 'Нечего сохранять', description: 'Заполните хотя бы одно поле', color: 'warning', icon: 'i-lucide-alert-triangle' })
+    return
+  }
+  if (form.password && form.password !== form.passwordConfirm) {
+    toast.add({ title: 'Пароли не совпадают', color: 'warning', icon: 'i-lucide-alert-triangle' })
+    return
+  }
+
+  loading.value = true
+  try {
+    // ========================= MOCK =========================
+    await new Promise(resolve => setTimeout(resolve, 600))
+    if (form.name.trim() && auth.user) {
+      auth.user.name = form.name.trim()
+    }
+    toast.add({ title: 'Профиль обновлён!', color: 'success', icon: 'i-lucide-circle-check' })
+    resetForm()
+    // ========================================================
+
+    // ----- РЕАЛЬНЫЙ update (раскомментировать когда бэк готов) -----
+    // const body: Record<string, string> = {}
+    // if (form.name.trim()) body.name = form.name.trim()
+    // if (form.password) body.password = form.password
+    // const res = await fetch(`http://localhost:5145/api/User/${auth.user?.id}`, {
+    //   method: 'PUT',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   credentials: 'include',
+    //   body: JSON.stringify(body),
+    // })
+    // if (!res.ok) throw new Error('Ошибка сервера. Попробуйте позже')
+    // if (form.name.trim() && auth.user) auth.user.name = form.name.trim()
+    // toast.add({ title: 'Профиль обновлён!', color: 'success', icon: 'i-lucide-circle-check' })
+    // resetForm()
+    // ---------------------------------------------------------------
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Что-то пошло не так'
+    toast.add({ title: 'Ошибка обновления', description: message, color: 'error', icon: 'i-lucide-circle-x' })
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleLogout() {
+  await auth.logout()
+  toast.add({ title: 'Вы вышли из аккаунта', color: 'neutral', icon: 'i-lucide-log-out' })
+  await router.push('/')
+}
+</script>
+</file>
+
+<file path="app/stores/study.ts">
+
+</file>
+
+<file path=".gitignore">
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea
+
+# Local env files
+.env
+.env.*
+!.env.example
+</file>
+
+<file path="app/app.vue">
+<script setup lang="ts">
+import AppBreadcrumb from './components/layout/AppBreadcrumb.vue';
+import AppFooter from './components/layout/AppFooter.vue';
+import AppHeader from './components/layout/AppHeader.vue';
+</script>
+
+<template>
+  <UApp>
+    <AppHeader />
+    <AppBreadcrumb />
+    <NuxtPage />
+    <AppFooter />
+    <UToaster />
+  </UApp>
+</template>
+
+<style>
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme {
+  --font-sans: 'Nunito', sans-serif;
+}
+
+:root {
+  --ui-radius: 0.5rem;
+}
+
+:root, .light {
+  --ui-primary: #AACA1C;
+  --ui-secondary: var(--color-amber-500);
+  --ui-success: var(--color-lime-500);
+  --ui-warning: var(--color-amber-500);
+  --ui-error: var(--color-rose-500);
+  --ui-info: var(--color-cyan-500);
+}
+
+.dark {
+  --ui-primary: #AACA1C;
+  --ui-secondary: var(--color-amber-400);
+  --ui-success: var(--color-lime-400);
+  --ui-warning: var(--color-amber-400);
+  --ui-error: var(--color-rose-400);
+  --ui-info: var(--color-cyan-400);
+}
+</style>
+</file>
+
+<file path="app/pages/index.vue">
+<template>
+  <div class="flex flex-col">
+
+    <!-- HERO -->
+    <section class="min-h-[90vh] flex items-center justify-center bg-muted px-4">
+      <div class="max-w-3xl w-full flex flex-col items-center text-center gap-8">
+        <div class="flex items-center gap-4">
+          <img src="/logo.png" alt="logo" class="size-24" />
+          <span class="text-6xl font-extrabold text-primary leading-tight">
+            Кодо<span class="text-secondary">Сфера</span>
+          </span>
+        </div>
+
+        <h1 class="text-3xl md:text-4xl font-bold text-highlighted leading-snug">
+          Научись программировать —<br />
+          <span class="text-primary">весело, понятно и бесплатно</span>
+        </h1>
+
+        <p class="text-xl text-muted max-w-xl">
+          Интерактивные уроки, задания с проверкой и система опыта, которая
+          превращает обучение в настоящее приключение 🚀
+        </p>
+
+        <div class="flex flex-wrap gap-4 justify-center">
+          <UButton
+            label="Начать обучение"
+            icon="i-lucide-rocket"
+            size="xl"
+            to="/lessons"
+          />
+          <UButton
+            label="Войти в аккаунт"
+            icon="i-lucide-log-in"
+            size="xl"
+            variant="ghost"
+            color="neutral"
+            to="/login"
+          />
+        </div>
+
+        <!-- Статы -->
+        <div class="grid grid-cols-3 gap-8 mt-4 w-full max-w-md">
+          <div class="flex flex-col items-center gap-1">
+            <span class="text-3xl font-extrabold text-primary">10+</span>
+            <span class="text-sm text-muted text-center">Модулей</span>
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <span class="text-3xl font-extrabold text-primary">50+</span>
+            <span class="text-sm text-muted text-center">Уроков</span>
+          </div>
+          <div class="flex flex-col items-center gap-1">
+            <span class="text-3xl font-extrabold text-primary">∞</span>
+            <span class="text-sm text-muted text-center">Интереса</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ВОЗМОЖНОСТИ -->
+    <section class="py-24 px-4">
+      <div class="max-w-5xl mx-auto flex flex-col gap-12">
+        <div class="text-center flex flex-col gap-3">
+          <h2 class="text-3xl font-extrabold text-highlighted">Почему КодоСфера?</h2>
+          <p class="text-lg text-muted">Всё что нужно для старта — в одном месте</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <UCard
+            v-for="feature in features"
+            :key="feature.title"
+            class="text-center"
+          >
+            <div class="flex flex-col items-center gap-4 py-4">
+              <div class="size-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <UIcon :name="feature.icon" class="size-8 text-primary" />
+              </div>
+              <h3 class="text-lg font-bold text-highlighted">{{ feature.title }}</h3>
+              <p class="text-muted">{{ feature.description }}</p>
+            </div>
+          </UCard>
+        </div>
+      </div>
+    </section>
+
+    <!-- КАК ЭТО РАБОТАЕТ -->
+    <section class="py-24 px-4 bg-muted">
+      <div class="max-w-4xl mx-auto flex flex-col gap-12">
+        <div class="text-center flex flex-col gap-3">
+          <h2 class="text-3xl font-extrabold text-highlighted">Как это работает?</h2>
+          <p class="text-lg text-muted">Три простых шага до первой программы</p>
+        </div>
+
+        <div class="flex flex-col gap-6">
+          <div
+            v-for="(step, i) in steps"
+            :key="step.title"
+            class="flex items-start gap-6"
+          >
+            <div class="size-12 shrink-0 rounded-full bg-primary flex items-center justify-center text-white font-extrabold text-xl">
+              {{ i + 1 }}
+            </div>
+            <UCard class="flex-1">
+              <div class="flex items-start gap-4">
+                <UIcon :name="step.icon" class="size-6 text-primary mt-0.5 shrink-0" />
+                <div class="flex flex-col gap-1">
+                  <h3 class="text-lg font-bold text-highlighted">{{ step.title }}</h3>
+                  <p class="text-muted">{{ step.description }}</p>
+                </div>
+              </div>
+            </UCard>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-24 px-4">
+      <div class="max-w-2xl mx-auto">
+        <UCard class="text-center">
+          <div class="flex flex-col items-center gap-6 py-8">
+            <span class="text-5xl">🎯</span>
+            <h2 class="text-3xl font-extrabold text-highlighted">
+              Готов начать?
+            </h2>
+            <p class="text-lg text-muted max-w-md">
+              Зарегистрируйся бесплатно и начни своё путешествие в мир программирования прямо сейчас
+            </p>
+            <div class="flex flex-wrap gap-4 justify-center">
+              <UButton
+                label="Создать аккаунт"
+                icon="i-lucide-user-plus"
+                size="xl"
+                to="/register"
+              />
+              <UButton
+                label="Смотреть уроки"
+                icon="i-lucide-book-open"
+                size="xl"
+                variant="outline"
+                to="/lessons"
+              />
+            </div>
+          </div>
+        </UCard>
+      </div>
+    </section>
+
+  </div>
+</template>
+
+<script setup lang="ts">
+const features = [
+  {
+    icon: 'i-lucide-book-open-check',
+    title: 'Интерактивные уроки',
+    description: 'Теория + практика в каждом уроке. Пишешь код прямо в браузере и сразу видишь результат.',
+  },
+  {
+    icon: 'i-lucide-trophy',
+    title: 'Система опыта',
+    description: 'Зарабатывай XP за выполнение заданий, повышай уровень и следи за своим прогрессом.',
+  },
+  {
+    icon: 'i-lucide-layers',
+    title: 'Структурированная программа',
+    description: 'Модули идут от простого к сложному. Никакой каши — только чёткий путь вперёд.',
+  },
+]
+
+const steps = [
+  {
+    icon: 'i-lucide-user-plus',
+    title: 'Зарегистрируйся',
+    description: 'Создай аккаунт за 30 секунд — нужно только имя и пароль. Никакой почты.',
+  },
+  {
+    icon: 'i-lucide-book-open',
+    title: 'Выбери урок',
+    description: 'Открой каталог модулей, выбери тему и начни с первого урока. Всё бесплатно.',
+  },
+  {
+    icon: 'i-lucide-code-2',
+    title: 'Выполняй задания',
+    description: 'Решай практические задачи, получай XP и поднимайся в уровнях. Учёба как игра.',
+  },
+]
+</script>
+</file>
+
+<file path="app/pages/login.vue">
+<template>
+  <div class="min-h-screen flex items-center justify-center bg-muted">
+    <UCard class="w-full max-w-md">
+      <template #header>
+        <div class="flex flex-col items-center gap-3 text-center py-4">
+          <div class="flex items-center gap-2">
+            <img src="/logo.png" alt="logo" class="size-16" />
+            <span class="text-4xl font-extrabold text-primary">Кодо<span class="text-secondary">Сфера</span></span>
+          </div>
+          <p class="text-lg text-muted">Войдите в свой аккаунт</p>
+        </div>
+
+        <!-- ⚠️ MOCK-баннер — удалить когда бэк готов -->
+        <UAlert
+          color="warning"
+          variant="soft"
+          icon="i-lucide-flask-conical"
+          title="Моковый режим"
+          description="Имя: testuser / Пароль: test123"
+          class="mt-2"
+        />
+      </template>
+
+      <form class="space-y-6" @submit.prevent="handleLogin">
+        <UFormField
+          label="Имя пользователя"
+          required
+          :ui="{ label: 'text-base font-bold mb-1' }"
+        >
+          <UInput
+            v-model="form.name"
+            type="text"
+            placeholder="Введите имя пользователя"
+            icon="i-lucide-user"
+            size="xl"
+            class="w-full"
+            autocomplete="username"
+            autofocus
+          />
+        </UFormField>
+
+        <UFormField
+          label="Пароль"
+          required
+          :ui="{ label: 'text-base font-bold mb-1' }"
+        >
+          <UInput
+            v-model="form.password"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="••••••••"
+            icon="i-lucide-lock"
+            size="xl"
+            class="w-full"
+            autocomplete="current-password"
+          >
+            <template #trailing>
+              <UButton
+                :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                variant="ghost"
+                color="neutral"
+                size="xl"
+                @click="showPassword = !showPassword"
+              />
+            </template>
+          </UInput>
+        </UFormField>
+
+        <div class="flex items-center justify-between">
+          <UCheckbox
+            v-model="form.remember"
+            label="Запомнить меня"
+            :ui="{ label: 'text-base' }"
+          />
+          <UButton label="Забыли пароль?" variant="link" size="md" />
+        </div>
+
+        <UButton
+          type="submit"
+          label="Войти"
+          icon="i-lucide-log-in"
+          size="xl"
+          class="w-full"
+          :loading="loading"
+        />
+      </form>
+
+      <template #footer>
+        <p class="text-center text-base text-muted py-2">
+          Нет аккаунта?
+          <UButton label="Зарегистрироваться" variant="link" size="md" to="/register" />
+        </p>
+      </template>
+    </UCard>
+  </div>
+</template>
+
+<script setup lang="ts">
+
+definePageMeta({ middleware: 'guest' })
+
+const auth = useAuthStore()
+const router = useRouter()
+const toast = useToast()
+
+const form = reactive({
+  name: '',
+  password: '',
+  remember: false,
+})
+
+const showPassword = ref(false)
+const loading = ref(false)
+
+async function handleLogin() {
+  // Клиентская валидация
+  if (!form.name.trim()) {
+    toast.add({ title: 'Укажите имя пользователя', color: 'warning', icon: 'i-lucide-alert-triangle' })
+    return
+  }
+  if (!form.password) {
+    toast.add({ title: 'Введите пароль', color: 'warning', icon: 'i-lucide-alert-triangle' })
+    return
+  }
+
+  loading.value = true
+  try {
+    await auth.login(form.name.trim(), form.password)
+    toast.add({
+      title: 'Добро пожаловать!',
+      description: `Привет, ${auth.user?.name} 👋`,
+      color: 'success',
+      icon: 'i-lucide-circle-check',
+    })
+    await router.push('/')
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Что-то пошло не так'
+    toast.add({ title: 'Ошибка входа', description: message, color: 'error', icon: 'i-lucide-circle-x' })
+  } finally {
+    loading.value = false
+  }
+}
+</script>
+</file>
+
+<file path="app/pages/register.vue">
+<template>
+  <div class="min-h-screen flex items-center justify-center bg-muted">
+    <UCard class="w-full max-w-md">
+      <template #header>
+        <div class="flex flex-col items-center gap-3 text-center py-4">
+          <div class="flex items-center gap-2">
+            <img src="/logo.png" alt="logo" class="size-16" />
+            <span class="text-4xl font-extrabold text-primary">Кодо<span class="text-secondary">Сфера</span></span>
+          </div>
+          <p class="text-lg text-muted">Создайте аккаунт</p>
+        </div>
+
+        <!-- ⚠️ MOCK-баннер — удалить когда бэк готов -->
+        <UAlert
+          color="warning"
+          variant="soft"
+          icon="i-lucide-flask-conical"
+          title="Моковый режим"
+          description="Любое имя (кроме testuser) и пароль"
+          class="mt-2"
+        />
+      </template>
+
+      <form class="space-y-6" @submit.prevent="handleRegister">
+        <UFormField
+          label="Имя пользователя"
+          required
+          :ui="{ label: 'text-base font-bold mb-1' }"
+        >
+          <UInput
+            v-model="form.name"
+            type="text"
+            placeholder="Придумайте имя"
+            icon="i-lucide-user"
+            size="xl"
+            class="w-full"
+            autocomplete="username"
+            autofocus
+          />
+        </UFormField>
+
+        <UFormField
+          label="Пароль"
+          required
+          :ui="{ label: 'text-base font-bold mb-1' }"
+        >
+          <UInput
+            v-model="form.password"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="••••••••"
+            icon="i-lucide-lock"
+            size="xl"
+            class="w-full"
+            autocomplete="new-password"
+          >
+            <template #trailing>
+              <UButton
+                :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                variant="ghost"
+                color="neutral"
+                size="xl"
+                @click="showPassword = !showPassword"
+              />
+            </template>
+          </UInput>
+        </UFormField>
+
+        <UFormField
+          label="Повторите пароль"
+          required
+          :ui="{ label: 'text-base font-bold mb-1' }"
+        >
+          <UInput
+            v-model="form.passwordConfirm"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="••••••••"
+            icon="i-lucide-lock-keyhole"
+            size="xl"
+            class="w-full"
+            autocomplete="new-password"
+          >
+            <template #trailing>
+              <UButton
+                :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                variant="ghost"
+                color="neutral"
+                size="xl"
+                @click="showPassword = !showPassword"
+              />
+            </template>
+          </UInput>
+        </UFormField>
+
+
+        <UButton
+          type="submit"
+          label="Зарегистрироваться"
+          icon="i-lucide-user-plus"
+          size="xl"
+          class="w-full"
+          :loading="loading"
+        />
+      </form>
+
+      <template #footer>
+        <p class="text-center text-base text-muted py-2">
+          Уже есть аккаунт?
+          <UButton label="Войти" variant="link" size="md" to="/login" />
+        </p>
+      </template>
+    </UCard>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { useAuthStore } from '~/stores/auth'
+
+definePageMeta({ middleware: 'guest' })
+
+const auth = useAuthStore()
+const router = useRouter()
+const toast = useToast()
+
+const form = reactive({
+  name: '',
+  password: '',
+  passwordConfirm: '',
+})
+
+const showPassword = ref(false)
+const loading = ref(false)
+
+async function handleRegister() {
+  if (!form.name.trim()) {
+    toast.add({ title: 'Укажите имя пользователя', color: 'warning', icon: 'i-lucide-alert-triangle' })
+    return
+  }
+  if (!form.password) {
+    toast.add({ title: 'Введите пароль', color: 'warning', icon: 'i-lucide-alert-triangle' })
+    return
+  }
+  if (form.password !== form.passwordConfirm) {
+    toast.add({ title: 'Пароли не совпадают', color: 'warning', icon: 'i-lucide-alert-triangle' })
+    return
+  }
+
+  loading.value = true
+  try {
+    await auth.register(form.name.trim(), form.password)
+    toast.add({
+      title: 'Аккаунт создан!',
+      description: `Добро пожаловать, ${auth.user?.name} 🎉`,
+      color: 'success',
+      icon: 'i-lucide-circle-check',
+    })
+    await router.push('/')
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Что-то пошло не так'
+    toast.add({ title: 'Ошибка регистрации', description: message, color: 'error', icon: 'i-lucide-circle-x' })
+  } finally {
+    loading.value = false
+  }
+}
+</script>
+</file>
+
+<file path="app/stores/auth.ts">
+// stores/auth.ts
+import { defineStore } from 'pinia'
+
+// ========================= MOCK =========================
+// Тестовый пользователь для моковой авторизации
+const MOCK_USER = { id: 1, name: 'testuser', password: 'test123', xp: 120, level: 2, role: 'student' }
+// ========================================================
+
+export interface AuthUser {
+  id: number
+  name: string
+  xp: number
+  role: string
+  level: number
+}
+
+export const useAuthStore = defineStore('auth', () => {
+  const user = ref<AuthUser | null>(null)
+  const isAuthenticated = computed(() => !!user.value)
+
+  // ========================= MOCK =========================
+  async function login(name: string, password: string): Promise<void> {
+    // Имитация задержки сети
+    await new Promise(resolve => setTimeout(resolve, 600))
+
+    if (name === MOCK_USER.name && password === MOCK_USER.password) {
+      user.value = { id: MOCK_USER.id, name: MOCK_USER.name, xp: MOCK_USER.xp, level: MOCK_USER.level, role: MOCK_USER.role }
+      return
+    }
+    throw new Error('Неверное имя пользователя или пароль')
+  }
+  // ========================================================
+
+  // ----- РЕАЛЬНЫЙ login (раскомментировать когда бэк готов) -----
+  // async function login(name: string, password: string): Promise<void> {
+  //   const res = await fetch('http://localhost:5145/api/User/login', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     credentials: 'include', // важно для HttpOnly куки
+  //     body: JSON.stringify({ name, password }),
+  //   })
+  //   if (res.status === 401) throw new Error('Неверное имя пользователя или пароль')
+  //   if (!res.ok) throw new Error('Ошибка сервера. Попробуйте позже')
+  //   const data = await res.json()
+  //   // user.value = { id: data.id, name: data.name, role: data.role, xp: data.xp, level: data.level }
+
+  // }
+  // ---------------------------------------------------------------
+
+  // ========================= MOCK =========================
+  async function register(name: string, password: string): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, 600))
+
+    if (name === MOCK_USER.name) {
+      throw new Error('Пользователь с таким именем уже существует')
+    }
+    // После "регистрации" сразу логиним
+    user.value = { id: 0, name, xp: 0, level: 1, role: 'student' }
+  }
+  // ========================================================
+
+  // ----- РЕАЛЬНЫЙ register (раскомментировать когда бэк готов) -----
+  // async function register(name: string, password: string): Promise<void> {
+  //   const res = await fetch('http://localhost:5145/api/User/register', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify({ name, password }),
+  //   })
+  //   if (res.status === 409) throw new Error('Пользователь с таким именем уже существует')
+  //   if (!res.ok) throw new Error('Ошибка сервера. Попробуйте позже')
+  //   // После регистрации сразу логиним
+  //   await login(name, password)
+  // }
+  // -----------------------------------------------------------------
+
+  async function logout(): Promise<void> {
+    // ========================= MOCK =========================
+    user.value = null
+    // ========================================================
+
+    // ----- РЕАЛЬНЫЙ logout (раскомментировать когда бэк готов) -----
+    // await fetch('http://localhost:5145/api/User/logout', {
+    //   method: 'POST',
+    //   credentials: 'include',
+    // })
+    // user.value = null
+    // ---------------------------------------------------------------
+  }
+
+  return { user, isAuthenticated, login, register, logout }
+})
+</file>
+
+<file path="nuxt.config.ts">
+export default defineNuxtConfig({
+  future: {
+    compatibilityVersion: 4,
+  },
+
+
+  imports: {
+    dirs: ['stores'], // ← авто-импорт сторов
+  },
+
+
+
+  // css: ['./app/assets/css/main.css'],
+  modules: ['@nuxt/ui', '@pinia/nuxt'],
+  
+  ssr: true,
+  devtools: { enabled: true },
+  
+  compatibilityDate: '2024-11-01'
+})
+</file>
+
+<file path="package.json">
+{
+  "name": "hack-frontend",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@guolao/vue-monaco-editor": "^1.6.0",
+    "@nuxt/ui": "^4.6.0",
+    "@pinia/nuxt": "^0.11.3",
+    "nuxt": "^4.4.2",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.30",
+    "vue-router": "^5.0.4"
+  }
+}
+</file>
+
+<file path="public/robots.txt">
+User-Agent: *
+Disallow:
+</file>
+
+<file path="README.md">
+# Nuxt Minimal Starter
+
+Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+
+## Setup
+
+Make sure to install dependencies:
+
+```bash
+# npm
+npm install
+
+# pnpm
+pnpm install
+
+# yarn
+yarn install
+
+# bun
+bun install
+```
+
+## Development Server
+
+Start the development server on `http://localhost:3000`:
+
+```bash
+# npm
+npm run dev
+
+# pnpm
+pnpm dev
+
+# yarn
+yarn dev
+
+# bun
+bun run dev
+```
+
+## Production
+
+Build the application for production:
+
+```bash
+# npm
+npm run build
+
+# pnpm
+pnpm build
+
+# yarn
+yarn build
+
+# bun
+bun run build
+```
+
+Locally preview production build:
+
+```bash
+# npm
+npm run preview
+
+# pnpm
+pnpm preview
+
+# yarn
+yarn preview
+
+# bun
+bun run preview
+```
+
+Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+</file>
+
+<file path="tsconfig.json">
+{
+  // https://nuxt.com/docs/guide/concepts/typescript
+  "files": [],
+  "references": [
+    {
+      "path": "./.nuxt/tsconfig.app.json"
+    },
+    {
+      "path": "./.nuxt/tsconfig.server.json"
+    },
+    {
+      "path": "./.nuxt/tsconfig.shared.json"
+    },
+    {
+      "path": "./.nuxt/tsconfig.node.json"
+    }
+  ]
+}
+</file>
+
+</files>
