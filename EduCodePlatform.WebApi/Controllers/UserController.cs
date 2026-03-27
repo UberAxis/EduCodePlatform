@@ -35,108 +35,44 @@ namespace EduCodePlatform.WebApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GetUserDTO>>> GetAll()
         {
-            try
-            {
-                var users = await _service.GetAllAsync();
-                return Ok(users);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error");
-            }
+            var users = await _service.GetAllAsync();
+            return Ok(users);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<GetUserDTO>> GetById(int id)
         {
-            try
-            {
-                var user = await _service.GetByIdAsync(id);
-                return Ok(user);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error");
-            }
-
+            var user = await _service.GetByIdAsync(id);
+            return Ok(user);
         }
 
         [HttpPost("register")]
         public async Task<ActionResult<GetUserDTO>> Register(CreateUserDTO dto)
         {
-            try
-            {
-                var user = await _service.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error");
-            }
+            var user = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
         }
 
         [HttpPost("login")]
         public async Task<ActionResult> Login(LoginUserDTO dto)
         {
-            try
-            {
-                var token = await _service.LoginAsync(dto);
-                SetJWTCookie(token);
-                return Ok();
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error");
-            }
-
+            var token = await _service.LoginAsync(dto);
+            SetJWTCookie(token);
+            return Ok();
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult<GetUserDTO>> Update(int id, UpdateUserDTO dto)
         {
-            try
-            {
-                var updated = await _service.UpdateAsync(id, dto);
-                return Ok(updated);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error");
-            }
+            var updated = await _service.UpdateAsync(id, dto);
+            return Ok(updated);
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult<GetUserDTO>> Delete(int id)
         {
-            try
-            {
-                await _service.DeleteAsync(id);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error");
-            }
+            await _service.DeleteAsync(id);
+            return NoContent();
         }
     }
 }

@@ -1,10 +1,11 @@
 using AutoMapper;
 using EduCodePlatform.Application;
-using EduCodePlatform.Application.Mappings.Users;
 using EduCodePlatform.Infrastructure;
 using EduCodePlatform.WebApi;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
+using EduCodePlatform.WebApi.Middlewares;
+using EduCodePlatform.Application.Mappings;
 
 namespace EduCodePlatform.WebApi
 {
@@ -75,6 +76,8 @@ namespace EduCodePlatform.WebApi
             app.MapControllers();
 
             app.UseStaticFiles();
+
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.Run();
         }

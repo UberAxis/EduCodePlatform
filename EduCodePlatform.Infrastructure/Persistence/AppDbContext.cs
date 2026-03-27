@@ -7,6 +7,10 @@ namespace EduCodePlatform.Infrastructure.Persistence
     public class AppDbContext : DbContext
     {
         public DbSet<User> Users => Set<User>();
+        public DbSet<Module> Modules => Set<Module>();
+        public DbSet<Lesson> Lessons => Set<Lesson>();
+        public DbSet<LessonTask> LessonTasks => Set<LessonTask>();
+        public DbSet<TaskSubmission> TaskSubmissions => Set<TaskSubmission>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {

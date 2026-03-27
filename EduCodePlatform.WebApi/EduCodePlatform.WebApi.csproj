@@ -24,4 +24,10 @@
     <ProjectReference Include="..\EduCodePlatform.Infrastructure\EduCodePlatform.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\uploads\lessons\content\" />
+    <Folder Include="wwwroot\uploads\lessons\covers\" />
+    <Folder Include="wwwroot\uploads\modules\" />
+  </ItemGroup>
+
 </Project>

@@ -4,9 +4,6 @@ using Microsoft.Extensions.Configuration;
 
 namespace EduCodePlatform.Infrastructure.Persistence
 {
-    //  ЕСЛИ ЧЕСТНО, НЕ ПОМНЮ ТОЧНО, ЗАЧЕМ ЭТО, НО ВСТАВИЛ, ТК ЕСТЬ СЕЙЧАС В ДИПЛОМНОМ САЙТЕ
-    //  НО ВРОДЕ БЕЗ ЭТОГГО ЧТО-ТО НЕ РАБОТАЛО
-
     public class DesignTimeDbContextFactory
         : IDesignTimeDbContextFactory<AppDbContext>
     {
@@ -16,7 +13,7 @@ namespace EduCodePlatform.Infrastructure.Persistence
             var basePath = Directory.GetCurrentDirectory();
 
             // Поднимаемся к WebApi, чтобы прочитать appsettings.json
-            var webApiPath = Path.Combine(basePath, "..", "EduCodePlatform");
+            var webApiPath = Path.Combine(basePath, "..", "EduCodePlatform.WebApi");
 
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(webApiPath)
