@@ -1,4 +1,4 @@
-﻿namespace EduCodePlatform.Domain.Common
+namespace EduCodePlatform.Domain.Common
 {
     public abstract class BaseEntity
     {

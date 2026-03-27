@@ -6,14 +6,16 @@ namespace EduCodePlatform.Application.Interfaces.Services
     {
         Task<IEnumerable<GetUserDTO>> GetAllAsync();
 
-        Task<GetUserDTO> GetByIdAsync(int id);
+        Task<GetUserDTO> GetByIdAsync(Guid id);
 
         Task<GetUserDTO> CreateAsync(CreateUserDTO dto);
 
         Task<string> LoginAsync(LoginUserDTO dto);
 
-        Task<GetUserDTO> UpdateAsync(int id, UpdateUserDTO dto);
+        Task<GetUserDTO> UpdateProfileAsync(Guid userId, UpdateUserProfileDTO dto);
 
-        Task DeleteAsync(int id);
+        Task<GetUserDTO> AdminUpdateUserAsync(Guid userId, AdminUpdateUserDTO dto);
+
+        Task DeleteAsync(Guid id);
     }
 }

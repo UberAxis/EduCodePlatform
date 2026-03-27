@@ -2,12 +2,14 @@
 using EduCodePlatform.Application.Interfaces.FileStorage.Lessons;
 using EduCodePlatform.Application.Interfaces.FileStorage.Modules;
 using EduCodePlatform.Application.Interfaces.Repositories;
+using EduCodePlatform.Domain.Entities;
 using EduCodePlatform.Infrastructure.Auth;
 using EduCodePlatform.Infrastructure.FileStorage;
 using EduCodePlatform.Infrastructure.FileStorage.Lessons;
 using EduCodePlatform.Infrastructure.FileStorage.Modules;
 using EduCodePlatform.Infrastructure.Persistence;
 using EduCodePlatform.Infrastructure.Persistence.Repositories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +24,19 @@ namespace EduCodePlatform.Infrastructure
             services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
+            // Identity
+            services.AddIdentityCore<User>(options =>
+            {
+                options.Password.RequireDigit = false;
+                options.Password.RequiredLength = 6;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireLowercase = false;
+            })
+            .AddRoles<IdentityRole<Guid>>()
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
+
             // Repositories
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IModuleRepository, ModuleRepository>();
@@ -34,7 +49,6 @@ namespace EduCodePlatform.Infrastructure
 
             // Auth
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
-            services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<ITokenService, JwtTokenGenerator>();
 
             // File storage
