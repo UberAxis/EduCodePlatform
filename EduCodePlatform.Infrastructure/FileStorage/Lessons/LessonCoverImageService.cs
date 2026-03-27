@@ -16,8 +16,10 @@ namespace EduCodePlatform.Infrastructure.FileStorage.Lessons
         {
             _requestPath = options.Value.RequestLessonCoverPath;
 
+            var webRoot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
+
             _rootPath = Path.Combine(
-                env.WebRootPath,
+                webRoot,
                 "uploads",
                 "lessons",
                 "covers");

@@ -16,8 +16,10 @@ namespace EduCodePlatform.Infrastructure.FileStorage.Modules
         {
             _requestPath = options.Value.RequestModulePath;
 
+            var webRoot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
+
             _rootPath = Path.Combine(
-                env.WebRootPath,
+                webRoot,
                 "uploads",
                 "modules");
 
