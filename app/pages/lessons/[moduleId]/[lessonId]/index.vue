@@ -21,6 +21,7 @@
       </UCard>
 
       <template v-else>
+        <!-- Шапка урока -->
         <div class="flex flex-col gap-3">
           <div class="flex items-center gap-2 flex-wrap">
             <UBadge
@@ -37,15 +38,24 @@
               color="secondary"
               variant="subtle"
             />
+            <UBadge
+              v-if="currentLesson.quiz"
+              label="Есть тест"
+              icon="i-lucide-list-checks"
+              color="warning"
+              variant="subtle"
+            />
           </div>
           <h1 class="text-3xl font-extrabold text-highlighted">{{ currentLesson.title }}</h1>
           <p class="text-lg text-muted">{{ currentLesson.description }}</p>
         </div>
 
+        <!-- Контент -->
         <UCard>
           <div class="prose dark:prose-invert max-w-none" v-html="renderedContent" />
         </UCard>
 
+        <!-- Навигация -->
         <div class="flex items-center justify-between gap-4 flex-wrap">
           <UButton
             v-if="prevLesson"
@@ -57,7 +67,7 @@
           />
           <div v-else />
 
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 flex-wrap">
             <UButton
               v-if="currentLesson.task"
               label="Перейти к заданию"
@@ -66,7 +76,15 @@
               :to="`/lessons/${moduleId}/${lessonId}/task`"
             />
             <UButton
-              v-else-if="!currentLesson.isCompleted"
+              v-if="currentLesson.quiz"
+              label="Пройти тест"
+              icon="i-lucide-list-checks"
+              size="lg"
+              variant="outline"
+              :to="`/lessons/${moduleId}/${lessonId}/quiz`"
+            />
+            <UButton
+              v-if="!currentLesson.task && !currentLesson.quiz && !currentLesson.isCompleted"
               label="Отметить пройденным"
               icon="i-lucide-check"
               size="lg"
@@ -129,7 +147,7 @@ async function handleComplete() {
   completing.value = true
   try {
     await study.markLessonCompleted(moduleId.value, lessonId.value)
-    toast.add({ title: 'Урок пройден!', color: 'success', icon: 'i-lucide-check-circle' })
+    toast.add({ title: 'Урок пройден! 🎉', color: 'success', icon: 'i-lucide-check-circle' })
   } catch {
     toast.add({ title: 'Не удалось сохранить прогресс', color: 'error', icon: 'i-lucide-circle-x' })
   } finally {

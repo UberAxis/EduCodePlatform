@@ -55,43 +55,52 @@
 
         <!-- Список уроков -->
         <div class="flex flex-col gap-4">
-          <UCard
-            v-for="(lesson, index) in currentModule.lessons"
-            :key="lesson.id"
-            class="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
-            @click="navigateTo(`/lessons/${moduleId}/${lesson.id}`)"
-          >
-            <div class="flex items-center gap-4">
-              <!-- Номер / галочка -->
-              <div
-                class="size-10 rounded-full flex items-center justify-center shrink-0 font-bold text-base"
-                :class="lesson.isCompleted
-                  ? 'bg-success/10 text-success'
-                  : 'bg-primary/10 text-primary'"
-              >
-                <UIcon v-if="lesson.isCompleted" name="i-lucide-check" class="size-5" />
-                <span v-else>{{ index + 1 }}</span>
-              </div>
+  <UCard
+    v-for="(lesson, index) in currentModule.lessons"
+    :key="lesson.id"
+    class="cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+    @click="navigateTo(`/lessons/${moduleId}/${lesson.id}`)"
+  >
+    <div class="flex items-center gap-4">
+      <!-- Номер / галочка -->
+      <div
+        class="size-10 rounded-full flex items-center justify-center shrink-0 font-bold text-base"
+        :class="lesson.isCompleted
+          ? 'bg-success/10 text-success'
+          : 'bg-primary/10 text-primary'"
+      >
+        <UIcon v-if="lesson.isCompleted" name="i-lucide-check" class="size-5" />
+        <span v-else>{{ index + 1 }}</span>
+      </div>
 
-              <div class="flex flex-col gap-0.5 flex-1">
-                <h3 class="font-bold text-highlighted">{{ lesson.title }}</h3>
-                <p class="text-sm text-muted">{{ lesson.description }}</p>
-              </div>
+      <div class="flex flex-col gap-0.5 flex-1">
+        <h3 class="font-bold text-highlighted">{{ lesson.title }}</h3>
+        <p class="text-sm text-muted">{{ lesson.description }}</p>
+      </div>
 
-              <div class="flex items-center gap-2 shrink-0">
-                <UBadge
-                  v-if="lesson.task"
-                  label="Практика"
-                  icon="i-lucide-code-2"
-                  variant="subtle"
-                  color="secondary"
-                  size="sm"
-                />
-                <UIcon name="i-lucide-chevron-right" class="size-5 text-muted" />
-              </div>
-            </div>
-          </UCard>
-        </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <UBadge
+          v-if="lesson.task"
+          label="Практика"
+          icon="i-lucide-code-2"
+          variant="subtle"
+          color="secondary"
+          size="sm"
+        />
+        <UBadge
+          v-if="lesson.quiz"
+          label="Тест"
+          icon="i-lucide-list-checks"
+          variant="subtle"
+          color="warning"
+          size="sm"
+        />
+        <UIcon name="i-lucide-chevron-right" class="size-5 text-muted" />
+      </div>
+    </div>
+  </UCard>
+</div>
+
       </template>
 
     </div>

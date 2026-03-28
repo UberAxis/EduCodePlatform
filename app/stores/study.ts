@@ -6,6 +6,21 @@ export interface Task {
   description: string
   initialCode: string
   xpReward: number
+  testCode: string // ← код проверки, должен вернуть true если правильно
+}
+
+export interface QuizQuestion {
+  id: string
+  question: string
+  options: string[]
+  correctIndex: number
+}
+
+export interface Quiz {
+  id: string
+  title: string
+  questions: QuizQuestion[]
+  xpReward: number
 }
 
 export interface Lesson {
@@ -14,6 +29,7 @@ export interface Lesson {
   description: string
   content: string
   task?: Task
+  quiz?: Quiz
   isCompleted: boolean
 }
 
@@ -34,10 +50,10 @@ const MOCK_MODULES: Module[] = [
     icon: 'i-lucide-code-2',
     lessons: [
       {
-        id: '1',
-        title: 'Переменные и константы',
-        description: 'Учимся хранить данные в памяти.',
-        content: `
+          id: '1',
+          title: 'Переменные и константы',
+          description: 'Учимся хранить данные в памяти.',
+          content: `
 ### Что такое переменная?
 
 Представь, что переменная — это **коробочка**, в которую можно положить данные. На наклейке написано имя, а внутри лежит значение.
@@ -54,14 +70,49 @@ let box = "Игрушка";
 - \`const\` — значение менять нельзя
 - \`var\` — старый способ, лучше не использовать
         `,
-        isCompleted: false,
-        task: {
-          id: 'task-1',
-          title: 'Робо-имя',
-          description: 'Объяви переменную robotName и присвой ей любое имя в кавычках.',
-          initialCode: '// Напиши код здесь\nlet robotName = "";',
-          xpReward: 50,
-        },
+          task: {
+              id: 'task-1',
+              title: 'Робо-имя',
+              description: 'Объяви переменную robotName и присвой ей любое имя в кавычках.',
+              initialCode: '// Напиши код здесь\nlet robotName = "";',
+              xpReward: 50,
+              // ========================= MOCK =========================
+              testCode: `return typeof robotName !== 'undefined' && typeof robotName === 'string' && robotName.trim().length > 0`,
+              // ========================================================
+              // ----- РЕАЛЬНЫЙ testCode не нужен — проверка на бэке -----
+          },
+          quiz: {
+              id: 'quiz-1',
+              title: 'Проверь себя: Переменные',
+              xpReward: 30,
+              questions: [
+                  {
+                      id: 'q1',
+                      question: 'Какое ключевое слово используется для объявления переменной, которую можно изменить?',
+                      options: ['const', 'let', 'var', 'def'],
+                      correctIndex: 1,
+                  },
+                  {
+                      id: 'q2',
+                      question: 'Что выведет console.log("Привет")?',
+                      options: ['Ничего', 'Ошибку', 'Привет', '"Привет"'],
+                      correctIndex: 2,
+                  },
+                  {
+                      id: 'q3',
+                      question: 'Какой тип данных у значения true?',
+                      options: ['string', 'number', 'boolean', 'object'],
+                      correctIndex: 2,
+                  },
+                  {
+                      id: 'q4',
+                      question: 'Как правильно объявить константу?',
+                      options: ['let name = "Макс"', 'const name = "Макс"', 'var name = "Макс"', 'set name = "Макс"'],
+                      correctIndex: 1,
+                  },
+              ],
+          },
+          isCompleted: false
       },
       {
         id: '2',
@@ -81,12 +132,15 @@ let div = 10 / 2;   // 5
         `,
         isCompleted: false,
         task: {
-          id: 'task-2',
-          title: 'Счётчик деталей',
-          description: 'Создай переменную totalParts равную сумме 10 и 15.',
-          initialCode: '// Напиши код здесь\n',
-          xpReward: 50,
-        },
+  id: 'task-2',
+  title: 'Счётчик деталей',
+  description: 'Создай переменную totalParts равную сумме 10 и 15.',
+  initialCode: '// Напиши код здесь\n',
+  xpReward: 50,
+  // ========================= MOCK =========================
+  testCode: `return typeof totalParts !== 'undefined' && totalParts === 25`,
+  // ========================================================
+},
       },
     ],
   },

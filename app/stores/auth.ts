@@ -15,24 +15,24 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   const _user = ref<AuthUser | null>(userCookie.value || null)
-  
-  const isMock = ref(true) // ЯДЕРНАЯ КНОПКА переключает мока на реальный АПИ
+
+  const isMock = ref(true) // ЯДЕРНАЯ КНОПКА переключает мок на реальный АПИ
 
   const API_URL = 'http://localhost:5145/api'
 
-  const MOCK_DATA: AuthUser = { 
-    id: 1, 
-    userName: 'Junior_Coder', 
-    xp: 150, 
-    level: 2, 
-    role: 'User' 
+  const MOCK_DATA: AuthUser = {
+    id: 1,
+    userName: 'Junior_Coder',
+    xp: 150,
+    level: 2,
+    role: 'User'
   }
 
   const user = computed(() => {
     if (!_user.value) return null
     return {
       ..._user.value,
-      name: _user.value.userName 
+      name: _user.value.userName
     }
   })
 
@@ -53,7 +53,7 @@ export const useAuthStore = defineStore('auth', () => {
         method: 'POST',
         body: { userName, password },
       })
-      
+
       const loggedUser = {
         id: data.id,
         userName: data.userName,
@@ -98,13 +98,35 @@ export const useAuthStore = defineStore('auth', () => {
     navigateTo('/login')
   }
 
-  return { 
-    user, 
-    username, 
-    isAuthenticated, 
-    login, 
-    register, 
-    logout, 
-    isMock 
+  function addXp(amount: number) {
+    if (!_user.value) return
+
+    // Создаём новый объект чтобы реактивность и кука обновились
+    _user.value = { ..._user.value, xp: _user.value.xp + amount }
+
+    // Повышение уровня в цикле — на случай если XP очень много
+    let xpForNext = _user.value.level * 100
+    while (_user.value.xp >= xpForNext) {
+      _user.value = {
+        ..._user.value,
+        xp: _user.value.xp - xpForNext,
+        level: _user.value.level + 1,
+      }
+      xpForNext = _user.value.level * 100
+    }
+
+    // Синхронизируем куку
+    userCookie.value = _user.value
+  }
+
+  return {
+    user,
+    username,
+    isAuthenticated,
+    login,
+    register,
+    logout,
+    addXp,
+    isMock
   }
 })

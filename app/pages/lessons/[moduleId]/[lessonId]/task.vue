@@ -2,7 +2,6 @@
   <div class="min-h-screen bg-muted py-10 px-4">
     <div class="max-w-5xl mx-auto flex flex-col gap-6">
 
-      <!-- Назад -->
       <UButton
         label="К уроку"
         icon="i-lucide-arrow-left"
@@ -12,7 +11,6 @@
         class="self-start"
       />
 
-      <!-- Не найдено -->
       <UCard v-if="!task">
         <div class="flex flex-col items-center gap-3 py-8 text-center">
           <UIcon name="i-lucide-frown" class="size-12 text-muted" />
@@ -52,17 +50,21 @@
               <template #header>
                 <div class="flex items-center gap-2">
                   <UIcon
-                    :name="result.success ? 'i-lucide-check-circle' : 'i-lucide-circle-x'"
-                    :class="result.success ? 'text-success' : 'text-error'"
+                    :name="result.passed ? 'i-lucide-check-circle' : result.hasError ? 'i-lucide-circle-x' : 'i-lucide-circle-alert'"
+                    :class="result.passed ? 'text-success' : result.hasError ? 'text-error' : 'text-warning'"
                     class="size-5"
                   />
-                  <span class="font-bold" :class="result.success ? 'text-success' : 'text-error'">
-                    {{ result.success ? 'Отлично! Всё работает' : 'Есть ошибка' }}
+                  <span
+                    class="font-bold"
+                    :class="result.passed ? 'text-success' : result.hasError ? 'text-error' : 'text-warning'"
+                  >
+                    {{ result.passed ? 'Правильно! Задание выполнено 🎉' : result.hasError ? 'Ошибка в коде' : 'Код запустился, но ответ неверный' }}
                   </span>
                 </div>
               </template>
-              <pre class="text-sm font-mono whitespace-pre-wrap break-all"
-                :class="result.success ? 'text-success' : 'text-error'"
+              <pre
+                class="text-sm font-mono whitespace-pre-wrap break-all"
+                :class="result.passed ? 'text-success' : result.hasError ? 'text-error' : 'text-warning'"
               >{{ result.output }}</pre>
             </UCard>
           </div>
@@ -95,9 +97,8 @@
               />
             </div>
 
-            <!-- Сдать задание -->
             <UButton
-              v-if="result?.success && !isCompleted"
+              v-if="result?.passed && !isCompleted"
               label="Сдать задание и получить XP"
               icon="i-lucide-trophy"
               size="xl"
@@ -144,7 +145,7 @@ const isCompleted = computed(() => currentLesson.value?.isCompleted ?? false)
 const code = ref('')
 const running = ref(false)
 const submitting = ref(false)
-const result = ref<{ success: boolean; output: string } | null>(null)
+const result = ref<{ passed: boolean; hasError: boolean; output: string } | null>(null)
 
 function resetCode() {
   code.value = task.value?.initialCode ?? ''
@@ -152,7 +153,6 @@ function resetCode() {
 }
 
 // ========================= MOCK =========================
-// Запуск кода через Function() — только для мока, небезопасно в продакшне
 function runCode() {
   if (!code.value.trim()) return
   running.value = true
@@ -162,15 +162,29 @@ function runCode() {
     try {
       const logs: string[] = []
       const fakeConsole = { log: (...args: unknown[]) => logs.push(args.join(' ')) }
+
+      // Запускаем код ученика
       // eslint-disable-next-line no-new-func
       new Function('console', code.value)(fakeConsole)
-      result.value = {
-        success: true,
-        output: logs.length ? logs.join('\n') : '✓ Код выполнен без ошибок',
+
+      const output = logs.length ? logs.join('\n') : '✓ Код выполнен без ошибок'
+
+      // Проверяем правильность через testCode
+      let passed = true
+      if (task.value?.testCode) {
+        try {
+          // eslint-disable-next-line no-new-func
+          passed = new Function('console', `${code.value}\n${task.value.testCode}`)(fakeConsole) === true
+        } catch {
+          passed = false
+        }
       }
+
+      result.value = { passed, hasError: false, output }
     } catch (e: unknown) {
       result.value = {
-        success: false,
+        passed: false,
+        hasError: true,
         output: e instanceof Error ? e.message : 'Неизвестная ошибка',
       }
     } finally {
@@ -193,9 +207,9 @@ function runCode() {
 //       body: JSON.stringify({ code: code.value, taskId: task.value?.id }),
 //     })
 //     const data = await res.json()
-//     result.value = { success: data.success, output: data.output }
+//     result.value = { passed: data.passed, hasError: false, output: data.output }
 //   } catch {
-//     result.value = { success: false, output: 'Ошибка соединения с сервером' }
+//     result.value = { passed: false, hasError: true, output: 'Ошибка соединения с сервером' }
 //   } finally {
 //     running.value = false
 //   }
@@ -209,7 +223,7 @@ async function handleSubmit() {
     await study.markLessonCompleted(moduleId.value, lessonId.value)
 
     // ========================= MOCK =========================
-    if (auth.user) auth.user.xp += task.value.xpReward
+    auth.addXp(task.value.xpReward)
     // ========================================================
 
     // ----- РЕАЛЬНЫЙ XP (раскомментировать когда бэк готов) -----
