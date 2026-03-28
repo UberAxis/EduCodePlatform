@@ -6,6 +6,8 @@ const labels: Record<string, string> = {
   profile: 'Профиль',
   login: 'Войти',
   register: 'Регистрация',
+  task: 'Практическое задание',
+  quiz: 'Тест'
 }
 
 const items = computed(() => {
