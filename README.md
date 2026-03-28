@@ -6,7 +6,7 @@ EduCodePlatform — это веб-платформа для управления
 
 *   **Frontend:** Nuxt.js (Vue.js, TypeScript), Nuxt UI, Tailwind CSS, Pinia
 *   **Backend:** .NET Core (C#), Entity Framework Core, ASP.NET Core Web API
-*   **База данных:** Реляционная база данных (например, PostgreSQL, SQL Server, MySQL — конфигурация определяется в `docker-compose.yml`)
+*   **База данных:** Реляционная база данных PostgreSQL
 *   **Контейнеризация:** Docker, Docker Compose
 *   **Аутентификация:** JWT (JSON Web Tokens)
 
