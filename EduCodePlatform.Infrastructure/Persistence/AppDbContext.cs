@@ -11,7 +11,12 @@ namespace EduCodePlatform.Infrastructure.Persistence
         public DbSet<Module> Modules => Set<Module>();
         public DbSet<Lesson> Lessons => Set<Lesson>();
         public DbSet<LessonTask> LessonTasks => Set<LessonTask>();
+        public DbSet<QuizOption> QuizOptions => Set<QuizOption>();
         public DbSet<TaskSubmission> TaskSubmissions => Set<TaskSubmission>();
+        public DbSet<Achievement> Achievements => Set<Achievement>();
+        public DbSet<AchievementTrigger> AchievementTriggers => Set<AchievementTrigger>();
+        public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
+        public DbSet<UserLessonProgress> UserLessonProgresses => Set<UserLessonProgress>();
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {

@@ -1,4 +1,4 @@
-﻿using EduCodePlatform.Application.Interfaces.Repositories;
+using EduCodePlatform.Application.Interfaces.Repositories;
 
 namespace EduCodePlatform.Infrastructure.Persistence.Repositories
 {
@@ -10,6 +10,7 @@ namespace EduCodePlatform.Infrastructure.Persistence.Repositories
         public ILessonRepository Lessons { get; }
         public ILessonTaskRepository LessonTasks { get; }
         public ITaskSubmissionRepository TaskSubmissions { get; }
+        public IAchievementRepository Achievements { get; }
 
         public UnitOfWork(
             AppDbContext context,
@@ -17,7 +18,8 @@ namespace EduCodePlatform.Infrastructure.Persistence.Repositories
             IModuleRepository modules,
             ILessonRepository lessons,
             ILessonTaskRepository lessonTasks,
-            ITaskSubmissionRepository taskSubmissions)
+            ITaskSubmissionRepository taskSubmissions,
+            IAchievementRepository achievements)
         {
             _context = context;
             Users = userRepository;
@@ -25,6 +27,7 @@ namespace EduCodePlatform.Infrastructure.Persistence.Repositories
             Lessons = lessons;
             LessonTasks = lessonTasks;
             TaskSubmissions = taskSubmissions;
+            Achievements = achievements;
         }
 
         public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();

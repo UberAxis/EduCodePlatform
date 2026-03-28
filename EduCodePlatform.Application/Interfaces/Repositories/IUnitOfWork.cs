@@ -1,4 +1,4 @@
-﻿namespace EduCodePlatform.Application.Interfaces.Repositories
+namespace EduCodePlatform.Application.Interfaces.Repositories
 {
     public interface IUnitOfWork
     {
@@ -7,6 +7,7 @@
         ILessonRepository Lessons { get; }
         ILessonTaskRepository LessonTasks { get; }
         ITaskSubmissionRepository TaskSubmissions { get; }
+        IAchievementRepository Achievements { get; }
         Task<int> SaveChangesAsync();
     }
 }

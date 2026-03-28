@@ -1,0 +1,28 @@
+/* @import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme {
+  --font-sans: 'Nunito', sans-serif;
+}
+
+:root {
+  --ui-radius: 0.5rem;
+}
+
+:root, .light {
+  --ui-primary: var(--ui-color-emerald-500);
+  --ui-secondary: var(--ui-color-amber-500);
+  --ui-success: var(--ui-color-lime-500);
+  --ui-warning: var(--ui-color-amber-500);
+  --ui-error: var(--ui-color-rose-500);
+  --ui-info: var(--ui-color-cyan-500);
+}
+
+.dark {
+  --ui-primary: var(--ui-color-emerald-400);
+  --ui-secondary: var(--ui-color-amber-400);
+  --ui-success: var(--ui-color-lime-400);
+  --ui-warning: var(--ui-color-amber-400);
+  --ui-error: var(--ui-color-rose-400);
+  --ui-info: var(--ui-color-cyan-400);
+} */

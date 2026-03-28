@@ -8,6 +8,8 @@ namespace EduCodePlatform.Application.Interfaces.Repositories
 
         Task<TaskSubmission?> GetByIdAsync(int id);
 
+        Task<IEnumerable<TaskSubmission>> GetByUserIdAsync(Guid userId);
+
         void Add(TaskSubmission TaskSubmission);
 
         void Delete(TaskSubmission TaskSubmission);

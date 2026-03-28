@@ -8,6 +8,8 @@ using System.Security.Claims;
 
 namespace EduCodePlatform.WebApi.Controllers
 {
+    public record LinkChildByCodeRequest(string Code);
+
     [Route("api/[controller]")]
     [ApiController]
     public class UserController : ControllerBase
@@ -57,6 +59,17 @@ namespace EduCodePlatform.WebApi.Controllers
             return Ok(user);
         }
 
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<ActionResult<GetUserDTO>> GetMe()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+            var user = await _service.GetMeAsync(userId);
+            return Ok(user);
+        }
+
         [HttpPost("register")]
         public async Task<ActionResult<GetUserDTO>> Register(CreateUserDTO dto)
         {
@@ -65,11 +78,11 @@ namespace EduCodePlatform.WebApi.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult> Login(LoginUserDTO dto)
+        public async Task<ActionResult<LoginResponseDTO>> Login(LoginUserDTO dto)
         {
-            var token = await _service.LoginAsync(dto);
-            SetJWTCookie(token);
-            return Ok(new { token });
+            var response = await _service.LoginAsync(dto);
+            SetJWTCookie(response.Token);
+            return Ok(response);
         }
 
         [HttpPut("profile")]
@@ -97,6 +110,68 @@ namespace EduCodePlatform.WebApi.Controllers
         {
             await _service.DeleteAsync(id);
             return NoContent();
+        }
+
+        [HttpPost("link-child")]
+        [Authorize]
+        public async Task<ActionResult> LinkChild(string childUserName)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+            await _service.LinkChildAsync(userId, childUserName);
+            return Ok(new { message = "Ребенок успешно привязан" });
+        }
+
+        [HttpGet("my-children")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<GetUserDTO>>> GetMyChildren()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+            var children = await _service.GetChildrenAsync(userId);
+            return Ok(children);
+        }
+
+        [HttpPost("generate-link-code")]
+        [Authorize]
+        public async Task<ActionResult> GenerateLinkCode()
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+            var code = await _service.GenerateLinkCodeAsync(userId);
+            return Ok(new { code, expiresInMinutes = 10 });
+        }
+
+        [HttpPost("link-child-by-code")]
+        [Authorize]
+        public async Task<ActionResult> LinkChildByCode([FromBody] LinkChildByCodeRequest request)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+            await _service.LinkChildByCodeAsync(userId, request.Code);
+            return Ok(new { message = "Ребёнок успешно привязан" });
+        }
+
+        [HttpDelete("unlink-child/{childId}")]
+        [Authorize]
+        public async Task<ActionResult> UnlinkChild(Guid childId)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+            await _service.UnlinkChildAsync(userId, childId);
+            return Ok(new { message = "Ребёнок отвязан" });
+        }
+
+        [HttpGet("leaderboard")]
+        public async Task<ActionResult<IEnumerable<GetUserDTO>>> GetLeaderboard(int count = 10)
+        {
+            var top = await _service.GetLeaderboardAsync(count);
+            return Ok(top);
         }
     }
 }

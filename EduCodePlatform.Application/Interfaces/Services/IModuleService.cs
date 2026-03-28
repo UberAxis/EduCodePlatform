@@ -1,12 +1,12 @@
-﻿using EduCodePlatform.Application.DTOs.Modules;
+using EduCodePlatform.Application.DTOs.Modules;
 
 namespace EduCodePlatform.Application.Interfaces.Services
 {
     public interface IModuleService
     {
-        Task<IEnumerable<GetModuleDTO>> GetAllAsync();
+        Task<IEnumerable<GetModuleDTO>> GetAllAsync(Guid? forUserId = null);
 
-        Task<GetModuleDTO> GetByIdAsync(int id);
+        Task<GetModuleDTO> GetByIdAsync(int id, Guid? forUserId = null);
 
         Task<GetModuleDTO> CreateAsync(CreateModuleDTO dto);
 

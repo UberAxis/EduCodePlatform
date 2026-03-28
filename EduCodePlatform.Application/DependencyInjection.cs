@@ -13,6 +13,7 @@ namespace EduCodePlatform.Application
             services.AddScoped<ILessonService, LessonService>();
             services.AddScoped<ILessonTaskService, LessonTaskService>();
             services.AddScoped<ITaskSubmissionService, TaskSubmissionService>();
+            services.AddScoped<IAchievementService, AchievementService>();
 
             return services;
         }

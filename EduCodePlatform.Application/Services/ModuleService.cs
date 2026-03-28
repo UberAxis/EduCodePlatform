@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using EduCodePlatform.Application.DTOs.Modules;
 using EduCodePlatform.Application.Interfaces.FileStorage.Modules;
 using EduCodePlatform.Application.Interfaces.Repositories;
@@ -23,20 +23,41 @@ namespace EduCodePlatform.Application.Services
             _fileStorageService = fileStorageService;
         }
 
-        public async Task<IEnumerable<GetModuleDTO>> GetAllAsync()
+        public async Task<IEnumerable<GetModuleDTO>> GetAllAsync(Guid? forUserId = null)
         {
             var modules = await _unitOfWork.Modules.GetAllAsync();
-            return _mapper.Map<IEnumerable<GetModuleDTO>>(modules);
+            var dtos = _mapper.Map<List<GetModuleDTO>>(modules);
+            await ApplyLessonCompletionAsync(dtos, forUserId);
+            return dtos;
         }
 
-        public async Task<GetModuleDTO> GetByIdAsync(int id)
+        public async Task<GetModuleDTO> GetByIdAsync(int id, Guid? forUserId = null)
         {
             var module = await _unitOfWork.Modules.GetByIdAsync(id);
 
             if (module == null)
                 throw new KeyNotFoundException("Module not found");
 
-            return _mapper.Map<GetModuleDTO>(module);
+            var dto = _mapper.Map<GetModuleDTO>(module);
+            await ApplyLessonCompletionAsync(new List<GetModuleDTO> { dto }, forUserId);
+            return dto;
+        }
+
+        private async Task ApplyLessonCompletionAsync(List<GetModuleDTO> modules, Guid? forUserId)
+        {
+            if (!forUserId.HasValue) return;
+
+            var user = await _unitOfWork.Users.GetByIdWithProgressAsync(forUserId.Value);
+            var completedLessonIds = user?.LessonProgress
+                .Where(p => p.IsCompleted)
+                .Select(p => p.LessonId)
+                .ToHashSet() ?? new HashSet<int>();
+
+            foreach (var m in modules)
+            {
+                foreach (var lesson in m.Lessons)
+                    lesson.IsCompleted = completedLessonIds.Contains(lesson.Id);
+            }
         }
 
         public async Task<GetModuleDTO> CreateAsync(CreateModuleDTO dto)

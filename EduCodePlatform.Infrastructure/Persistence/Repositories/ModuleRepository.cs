@@ -14,10 +14,16 @@ namespace EduCodePlatform.Infrastructure.Persistence.Repositories
         }
 
         public async Task<IEnumerable<Module>> GetAllAsync() =>
-            await _context.Modules.ToListAsync();
+            await _context.Modules
+                .Include(m => m.Lessons)
+                    .ThenInclude(l => l.LessonTasks)
+                .ToListAsync();
 
         public async Task<Module?> GetByIdAsync(int id) =>
-            await _context.Modules.FirstOrDefaultAsync(u => u.Id == id);
+            await _context.Modules
+                .Include(m => m.Lessons)
+                    .ThenInclude(l => l.LessonTasks)
+                .FirstOrDefaultAsync(u => u.Id == id);
 
         public async Task<Module?> GetByTitleAsync(string title) =>
             await _context.Modules.FirstOrDefaultAsync(u => u.Title == title);

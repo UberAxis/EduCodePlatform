@@ -1,4 +1,6 @@
-﻿namespace EduCodePlatform.Application.DTOs.Lessons
+﻿using EduCodePlatform.Application.DTOs.LessonTasks;
+
+namespace EduCodePlatform.Application.DTOs.Lessons
 {
     public class GetLessonDTO
     {
@@ -8,6 +10,8 @@
         public string MarkdownContent { get; set; } = null!;
         public int OrderIndex { get; set; }
         public int ModuleId { get; set; }
+        public GetLessonTaskDTO? Task { get; set; }
+        public bool IsCompleted { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

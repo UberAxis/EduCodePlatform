@@ -24,7 +24,16 @@ namespace EduCodePlatform.Domain.Entities
         public virtual User? Parent { get; set; }
         public virtual ICollection<User> Children { get; set; } = new List<User>();
 
+        // код привязки (6 цифр, expires через 10 минут)
+        public string? LinkCode { get; set; }
+        public DateTime? LinkCodeExpiresAt { get; set; }
+
+        public virtual ICollection<TaskSubmission> Submissions { get; set; } = new List<TaskSubmission>();
+        public virtual ICollection<UserAchievement> Achievements { get; set; } = new List<UserAchievement>();
+        public virtual ICollection<UserLessonProgress> LessonProgress { get; set; } = new List<UserLessonProgress>();
+
         public UserRole Role { get; set; }
+
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 

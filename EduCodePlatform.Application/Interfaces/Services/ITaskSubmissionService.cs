@@ -1,4 +1,4 @@
-﻿using EduCodePlatform.Application.DTOs.TaskSubmissions;
+using EduCodePlatform.Application.DTOs.TaskSubmissions;
 
 namespace EduCodePlatform.Application.Interfaces.Services
 {
@@ -8,7 +8,7 @@ namespace EduCodePlatform.Application.Interfaces.Services
 
         Task<GetTaskSubmissionDTO> GetByIdAsync(int id);
 
-        Task<GetTaskSubmissionDTO> CreateAsync(CreateTaskSubmissionDTO dto);
+        Task<GetTaskSubmissionDTO> CreateAsync(Guid userId, CreateTaskSubmissionDTO dto);
 
         Task DeleteAsync(int id);
     }

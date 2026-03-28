@@ -48,8 +48,19 @@ namespace EduCodePlatform.Application.Services
                 title: title,
                 markdownContent: dto.MarkdownContent,
                 expectedAnswer: dto.ExpectedAnswer,
-                lessonId: dto.LessonId
+                lessonId: dto.LessonId,
+                type: dto.Type,
+                initialCode: dto.InitialCode,
+                correctAnswerIndex: dto.CorrectAnswerIndex
             );
+
+            if (dto.Type.ToString() == "Quiz" && dto.QuizOptions != null && dto.QuizOptions.Count > 0)
+            {
+                foreach (var option in dto.QuizOptions)
+                {
+                    lessontask.QuizOptions.Add(new QuizOption(option.Text));
+                }
+            }
 
             _unitOfWork.LessonTasks.Add(lessontask);
             await _unitOfWork.SaveChangesAsync();
@@ -66,17 +77,30 @@ namespace EduCodePlatform.Application.Services
 
             var title = dto.Title;
 
-            var lessontaskExist = await _unitOfWork.LessonTasks.ExistsByTitleAsync(title);
+            var lessontaskExist = await _unitOfWork.LessonTasks.ExistsByTitleAsync(title, id);
 
             if (lessontaskExist)
                 throw new InvalidOperationException("LessonTask with this name already exist");
+
+            lessontask.QuizOptions.Clear();
 
             lessontask.UpdateLessonTask(
                 title: title,
                 markdownContent: dto.MarkdownContent,
                 expectedAnswer: dto.ExpectedAnswer,
-                lessonId: dto.LessonId
+                lessonId: dto.LessonId,
+                type: dto.Type,
+                initialCode: dto.InitialCode,
+                correctAnswerIndex: dto.CorrectAnswerIndex
             );
+
+            if (dto.Type.ToString() == "Quiz" && dto.QuizOptions != null && dto.QuizOptions.Count > 0)
+            {
+                foreach (var option in dto.QuizOptions)
+                {
+                    lessontask.QuizOptions.Add(new QuizOption(option.Text));
+                }
+            }
 
             await _unitOfWork.SaveChangesAsync();
             return _mapper.Map<GetLessonTaskDTO>(lessontask);

@@ -18,6 +18,8 @@ namespace EduCodePlatform.Application.Interfaces.Repositories
 
         Task<bool> ExistsByIdAsync(Guid id);
 
+        Task<User?> GetByIdWithProgressAsync(Guid id);
+
         Task<bool> ExistsByUserNameExceptUserAsync(string userName, Guid id);
     }
 }

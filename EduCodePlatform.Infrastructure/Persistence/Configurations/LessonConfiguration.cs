@@ -27,7 +27,7 @@ namespace EduCodePlatform.Infrastructure.Persistence.Configurations
                 .HasMaxLength(255);
 
             builder.Property(s => s.CoverImage)
-                .IsRequired()
+                .IsRequired(false)
                 .HasMaxLength(255);
 
             builder.Property(u => u.MarkdownContent)

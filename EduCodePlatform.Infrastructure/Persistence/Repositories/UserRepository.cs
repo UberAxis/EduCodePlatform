@@ -34,6 +34,12 @@ namespace EduCodePlatform.Infrastructure.Persistence.Repositories
         public async Task<bool> ExistsByIdAsync(Guid id) =>
             await _context.Users.AnyAsync(u => u.Id == id);
 
+        public async Task<User?> GetByIdWithProgressAsync(Guid id) =>
+            await _context.Users
+                .Include(u => u.LessonProgress)
+                .Include(u => u.Achievements)
+                .FirstOrDefaultAsync(u => u.Id == id);
+
         public async Task<bool> ExistsByUserNameExceptUserAsync(string userName, Guid id) =>
             await _context.Users.AnyAsync(u => u.Id != id && u.UserName == userName);
     }

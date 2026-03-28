@@ -14,10 +14,14 @@ namespace EduCodePlatform.Infrastructure.Persistence.Repositories
         }
 
         public async Task<IEnumerable<Lesson>> GetAllAsync() =>
-            await _context.Lessons.ToListAsync();
+            await _context.Lessons
+                .Include(l => l.LessonTasks)
+                .ToListAsync();
 
         public async Task<Lesson?> GetByIdAsync(int id) =>
-            await _context.Lessons.FirstOrDefaultAsync(u => u.Id == id);
+            await _context.Lessons
+                .Include(l => l.LessonTasks)
+                .FirstOrDefaultAsync(u => u.Id == id);
 
         public async Task<Lesson?> GetByTitleAsync(string title) =>
             await _context.Lessons.FirstOrDefaultAsync(u => u.Title == title);
@@ -30,6 +34,9 @@ namespace EduCodePlatform.Infrastructure.Persistence.Repositories
 
         public async Task<bool> ExistsByTitleAsync(string title) =>
             await _context.Lessons.AnyAsync(u => u.Title == title);
+
+        public async Task<bool> ExistsByTitleAsync(string title, int excludeId) =>
+            await _context.Lessons.AnyAsync(u => u.Title == title && u.Id != excludeId);
 
         public async Task<bool> ExistsByIdAsync(int id) =>
             await _context.Lessons.AnyAsync(u => u.Id == id);

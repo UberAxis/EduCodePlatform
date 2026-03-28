@@ -1,8 +1,10 @@
-﻿using EduCodePlatform.Application.Interfaces.Auth;
+using EduCodePlatform.Application.Interfaces.Auth;
 using EduCodePlatform.Application.Interfaces.FileStorage.Lessons;
 using EduCodePlatform.Application.Interfaces.FileStorage.Modules;
 using EduCodePlatform.Application.Interfaces.FileStorage.Users;
 using EduCodePlatform.Application.Interfaces.Repositories;
+using EduCodePlatform.Application.Interfaces.Services;
+using EduCodePlatform.Application.Services;
 using EduCodePlatform.Domain.Entities;
 using EduCodePlatform.Infrastructure.Auth;
 using EduCodePlatform.Infrastructure.FileStorage;
@@ -45,6 +47,8 @@ namespace EduCodePlatform.Infrastructure
             services.AddScoped<ILessonRepository, LessonRepository>();
             services.AddScoped<ILessonTaskRepository, LessonTaskRepository>();
             services.AddScoped<ITaskSubmissionRepository, TaskSubmissionRepository>();
+            services.AddScoped<IAchievementRepository, AchievementRepository>();
+            services.AddScoped<IAchievementTriggerRepository, AchievementTriggerRepository>();
 
             // UnitOfWork
             services.AddScoped<IUnitOfWork, UnitOfWork>();

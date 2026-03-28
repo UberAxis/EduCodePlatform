@@ -1,12 +1,13 @@
 using AutoMapper;
 using EduCodePlatform.Application;
+using EduCodePlatform.Application.Mappings;
 using EduCodePlatform.Infrastructure;
 using EduCodePlatform.Infrastructure.Persistence;
 using EduCodePlatform.WebApi;
+using EduCodePlatform.WebApi.Middlewares;
+using Microsoft.EntityFrameworkCore;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
-using EduCodePlatform.WebApi.Middlewares;
-using EduCodePlatform.Application.Mappings;
 
 namespace EduCodePlatform.WebApi
 {
@@ -23,6 +24,20 @@ namespace EduCodePlatform.WebApi
             );
 
             builder.Services.AddHttpContextAccessor();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("Default", policy =>
+                {
+                    policy
+                        .WithOrigins(
+                            "http://localhost:3000",
+                            "http://127.0.0.1:3000")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+            });
 
             // Controllers
             builder.Services.AddControllers();
@@ -47,17 +62,6 @@ namespace EduCodePlatform.WebApi
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 });
 
-
-            // CORS
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("Default", policy =>
-                {
-                    // frontend
-                    policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
-                });
-            });
-
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())
@@ -66,11 +70,12 @@ namespace EduCodePlatform.WebApi
                 app.UseSwaggerUI();
             }
 
-            app.UseMiddleware<ExceptionMiddleware>();
+            app.UseRouting();
+            app.UseCors("Default");
 
             app.UseHttpsRedirection();
 
-            app.UseCors("Default");
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseAuthentication();
 
@@ -80,13 +85,16 @@ namespace EduCodePlatform.WebApi
 
             app.UseStaticFiles();
 
-            // Seed Admin User
+            // Seed Data
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
+                var db = services.GetRequiredService<AppDbContext>();
+
                 try
                 {
-                    await DbInitializer.SeedAdminUser(services);
+                    db.Database.Migrate();
+                    await DbInitializer.SeedData(services);
                 }
                 catch (Exception ex)
                 {

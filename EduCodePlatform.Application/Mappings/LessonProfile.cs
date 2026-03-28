@@ -16,7 +16,9 @@ namespace EduCodePlatform.Application.Mappings
                  .ForMember(d => d.MarkdownContent,
                  o => o.MapFrom(s => s.MarkdownContent))
                  .ForMember(d => d.OrderIndex,
-                 o => o.MapFrom(s => s.OrderIndex));
+                 o => o.MapFrom(s => s.OrderIndex))
+                 .ForMember(d => d.Task,
+                 o => o.MapFrom(s => s.LessonTasks.FirstOrDefault()));
 
         }
     }

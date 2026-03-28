@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using EduCodePlatform.Application.DTOs.Users;
 using EduCodePlatform.Application.Interfaces.Auth;
 using EduCodePlatform.Application.Interfaces.Services;
@@ -40,6 +40,19 @@ namespace EduCodePlatform.Application.Services
             return _mapper.Map<GetUserDTO>(user);
         }
 
+        public async Task<GetUserDTO> GetMeAsync(Guid userId)
+        {
+            var user = await _userManager.Users
+                .Include(u => u.LessonProgress)
+                .Include(u => u.Achievements)
+                    .ThenInclude(ua => ua.Achievement)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null) throw new KeyNotFoundException("User not found");
+
+            return _mapper.Map<GetUserDTO>(user);
+        }
+
         public async Task<GetUserDTO> CreateAsync(CreateUserDTO dto)
         {
             var userExist = await _userManager.FindByNameAsync(dto.UserName);
@@ -48,6 +61,8 @@ namespace EduCodePlatform.Application.Services
                 throw new InvalidOperationException("User with this name already exists");
 
             var user = new User(dto.UserName);
+            user.FullName = dto.FullName;
+            user.Email = dto.Email;
 
             var result = await _userManager.CreateAsync(user, dto.Password);
 
@@ -59,7 +74,7 @@ namespace EduCodePlatform.Application.Services
             return _mapper.Map<GetUserDTO>(user);
         }
 
-        public async Task<string> LoginAsync(LoginUserDTO dto)
+        public async Task<LoginResponseDTO> LoginAsync(LoginUserDTO dto)
         {
             var user = await _userManager.FindByNameAsync(dto.UserName);
 
@@ -71,12 +86,26 @@ namespace EduCodePlatform.Application.Services
             if (!isPasswordValid)
                 throw new UnauthorizedAccessException("Invalid username or password");
 
-            return _tokenService.GenerateJSONWebToken(user);
+            var token = _tokenService.GenerateJSONWebToken(user);
+
+            return new LoginResponseDTO
+            {
+                Id = user.Id,
+                UserName = user.UserName!,
+                Token = token,
+                ExperiencePoints = user.ExperiencePoints,
+                Level = user.Level,
+                Role = user.Role.ToString()
+            };
         }
 
         public async Task<GetUserDTO> UpdateProfileAsync(Guid userId, UpdateUserProfileDTO dto)
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
+            var user = await _userManager.Users
+                .Include(u => u.LessonProgress)
+                .Include(u => u.Achievements)
+                    .ThenInclude(ua => ua.Achievement)
+                .FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null) throw new KeyNotFoundException("User not found");
 
             if (!string.IsNullOrWhiteSpace(dto.UserName))
@@ -89,6 +118,7 @@ namespace EduCodePlatform.Application.Services
             }
 
             if (!string.IsNullOrWhiteSpace(dto.FullName)) user.FullName = dto.FullName;
+            if (!string.IsNullOrWhiteSpace(dto.Email)) user.Email = dto.Email;
             if (!string.IsNullOrWhiteSpace(dto.AvatarUrl)) user.AvatarUrl = dto.AvatarUrl;
             if (dto.DateOfBirth.HasValue) user.DateOfBirth = dto.DateOfBirth;
 
@@ -132,6 +162,94 @@ namespace EduCodePlatform.Application.Services
                 throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
 
             return _mapper.Map<GetUserDTO>(user);
+        }
+
+        public async Task LinkChildAsync(Guid parentId, string childUserName)
+        {
+            var parent = await _userManager.FindByIdAsync(parentId.ToString());
+            var child = await _userManager.FindByNameAsync(childUserName);
+
+            if (parent == null || child == null)
+                throw new KeyNotFoundException("Parent or Child not found");
+
+            if (child.ParentId != null)
+                throw new InvalidOperationException("Child already has a linked parent");
+
+            child.ParentId = parentId;
+            await _userManager.UpdateAsync(child);
+        }
+
+        public async Task<IEnumerable<GetUserDTO>> GetChildrenAsync(Guid parentId)
+        {
+            var children = await _userManager.Users
+                .Include(u => u.LessonProgress)
+                .Where(u => u.ParentId == parentId)
+                .ToListAsync();
+
+            return _mapper.Map<IEnumerable<GetUserDTO>>(children);
+        }
+
+        public async Task<string> GenerateLinkCodeAsync(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null) throw new KeyNotFoundException("User not found");
+
+            if (user.ParentId != null)
+                throw new InvalidOperationException("Вы уже привязаны к родителю");
+
+            var code = Random.Shared.Next(100000, 999999).ToString();
+            user.LinkCode = code;
+            user.LinkCodeExpiresAt = DateTime.UtcNow.AddMinutes(10);
+
+            await _userManager.UpdateAsync(user);
+            return code;
+        }
+
+        public async Task LinkChildByCodeAsync(Guid parentId, string code)
+        {
+            var parent = await _userManager.FindByIdAsync(parentId.ToString());
+            if (parent == null) throw new KeyNotFoundException("Родитель не найден");
+
+            var child = await _userManager.Users
+                .FirstOrDefaultAsync(u => u.LinkCode == code && u.LinkCodeExpiresAt > DateTime.UtcNow);
+
+            if (child == null)
+                throw new InvalidOperationException("Код недействителен или истёк");
+
+            if (child.ParentId != null)
+                throw new InvalidOperationException("Ребёнок уже привязан к другому родителю");
+
+            if (child.Id == parentId)
+                throw new InvalidOperationException("Нельзя привязать самого себя");
+
+            child.ParentId = parentId;
+            child.LinkCode = null;
+            child.LinkCodeExpiresAt = null;
+
+            await _userManager.UpdateAsync(child);
+        }
+
+        public async Task UnlinkChildAsync(Guid parentId, Guid childId)
+        {
+            var child = await _userManager.FindByIdAsync(childId.ToString());
+            if (child == null) throw new KeyNotFoundException("Пользователь не найден");
+
+            if (child.ParentId != parentId)
+                throw new InvalidOperationException("Этот ребёнок не привязан к вам");
+
+            child.ParentId = null;
+            await _userManager.UpdateAsync(child);
+        }
+
+        public async Task<IEnumerable<GetUserDTO>> GetLeaderboardAsync(int count)
+        {
+            var topUsers = await _userManager.Users
+                .Include(u => u.LessonProgress)
+                .OrderByDescending(u => u.ExperiencePoints)
+                .Take(count)
+                .ToListAsync();
+
+            return _mapper.Map<IEnumerable<GetUserDTO>>(topUsers);
         }
 
         public async Task DeleteAsync(Guid id)

@@ -5,7 +5,7 @@ namespace EduCodePlatform.Domain.Entities
     public class Lesson : BaseEntity
     {
         public string Title { get; protected set; } = null!;
-        public string CoverImage { get; protected set; } = null!;
+        public string? CoverImage { get; protected set; }
         public string MarkdownContent { get; protected set; } = null!;
         public int OrderIndex { get; protected set; }
 
@@ -18,7 +18,7 @@ namespace EduCodePlatform.Domain.Entities
 
         public Lesson(
             string title,
-            string coverImage,
+            string? coverImage,
             string markdownContent,
             int orderIndex,
             int moduleId

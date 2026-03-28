@@ -19,6 +19,9 @@ namespace EduCodePlatform.Infrastructure.Persistence.Repositories
         public async Task<TaskSubmission?> GetByIdAsync(int id) =>
             await _context.TaskSubmissions.FirstOrDefaultAsync(u => u.Id == id);
 
+        public async Task<IEnumerable<TaskSubmission>> GetByUserIdAsync(Guid userId) =>
+            await _context.TaskSubmissions.Where(s => s.UserId == userId).ToListAsync();
+
         public void Add(TaskSubmission tasksubmission) =>
             _context.TaskSubmissions.Add(tasksubmission);
 

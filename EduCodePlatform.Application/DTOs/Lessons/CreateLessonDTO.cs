@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace EduCodePlatform.Application.DTOs.Lessons
 {
@@ -7,8 +6,7 @@ namespace EduCodePlatform.Application.DTOs.Lessons
     {
         [Required]
         public string Title { get; set; } = null!;
-        [Required]
-        public IFormFile CoverImage { get; set; } = null!;
+        public string? CoverImage { get; set; }
         [Required]
         [MaxLength(4200)]
         public string MarkdownContent { get; set; } = null!;

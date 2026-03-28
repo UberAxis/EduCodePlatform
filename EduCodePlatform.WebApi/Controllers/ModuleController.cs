@@ -1,7 +1,8 @@
-﻿using EduCodePlatform.Application.DTOs.Modules;
+using EduCodePlatform.Application.DTOs.Modules;
 using EduCodePlatform.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace EduCodePlatform.WebApi.Controllers
 {
@@ -19,16 +20,21 @@ namespace EduCodePlatform.WebApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GetModuleDTO>>> GetAll()
         {
-
-            var modules = await _service.GetAllAsync();
+            var modules = await _service.GetAllAsync(TryGetCurrentUserId());
             return Ok(modules);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<GetModuleDTO>> GetById(int id)
         {
-            var module = await _service.GetByIdAsync(id);
+            var module = await _service.GetByIdAsync(id, TryGetCurrentUserId());
             return Ok(module);
+        }
+
+        private Guid? TryGetCurrentUserId()
+        {
+            var sid = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Guid.TryParse(sid, out var id) ? id : null;
         }
 
         [HttpPost]

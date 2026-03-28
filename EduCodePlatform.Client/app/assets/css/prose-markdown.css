@@ -1,0 +1,5 @@
+/* @tailwindcss/typography по умолчанию рисует символы ` вокруг inline code — убираем */
+.prose :where(code):not(:where(pre *))::before,
+.prose :where(code):not(:where(pre *))::after {
+  content: none !important;
+}

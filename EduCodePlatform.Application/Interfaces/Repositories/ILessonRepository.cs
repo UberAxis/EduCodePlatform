@@ -16,6 +16,8 @@ namespace EduCodePlatform.Application.Interfaces.Repositories
 
         Task<bool> ExistsByTitleAsync(string title);
 
+        Task<bool> ExistsByTitleAsync(string title, int excludeId);
+
         Task<bool> ExistsByIdAsync(int id);
     }
 }
